@@ -1,4 +1,5 @@
 #include <SDL.h>
+#include <SDL_opengl.h>
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -10,7 +11,7 @@ int __err(int cond, char *file, int line, char *fmt, ...)
 	va_list va;
 	va_start(va, fmt);
 
-	fprintf(stderr, "Error: %s(%d):", file, line);
+	fprintf(stderr, "Error: %s(%d): ", file, line);
 	vfprintf(stderr, fmt, va);
 
 	va_end(va);
@@ -34,7 +35,16 @@ int win_create(struct context *ctx)
 	if (SDLERR_ON(ret < 0))
 		return -1;
 
-	ctx->win = SDL_CreateWindow("OpenGL learning", 0, 0, 640, 480, SDL_WINDOW_SHOWN);
+	ret = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+	if (SDLERR_ON(ret < 0))
+		goto fail_sdl;
+
+	ret = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	if (SDLERR_ON(ret < 0))
+		goto fail_sdl;
+
+	ctx->win = SDL_CreateWindow("OpenGL learning", 0, 0, 640, 480,
+		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	if (SDLERR_ON(!ctx->win))
 		goto fail_sdl;
 
@@ -68,6 +78,10 @@ int main()
 	int ret = win_create(&ctx);
 	if (ERR_ON(ret, "win_create failed\n"))
 		return EXIT_FAILURE;
+
+	glClearColor(1,0,0,1);
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapWindow(ctx.win);
 
 	SDL_Delay(2000);
 
