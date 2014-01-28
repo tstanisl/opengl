@@ -25,6 +25,7 @@ int __err(int cond, char *file, int line, char *fmt, ...)
 
 struct context {
 	SDL_Window *win;
+	SDL_Renderer *render;
 };
 
 int win_create(struct context *ctx)
@@ -37,8 +38,14 @@ int win_create(struct context *ctx)
 	if (SDLERR_ON(!ctx->win))
 		goto fail_sdl;
 
+	ctx->render = SDL_CreateRenderer(ctx->win, -1, SDL_RENDERER_ACCELERATED);
+	if (SDLERR_ON(!ctx->render))
+		goto fail_win;
+
 	return 0;
 
+fail_win:
+	SDL_DestroyWindow(ctx->win);
 fail_sdl:
 	SDL_Quit();
 
@@ -47,6 +54,7 @@ fail_sdl:
 
 void win_destroy(struct context *ctx)
 {
+	SDL_DestroyRenderer(ctx->render);
 	SDL_DestroyWindow(ctx->win);
 	SDL_Quit();
 }
