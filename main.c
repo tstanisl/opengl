@@ -1,3 +1,5 @@
+#define GL_GLEXT_PROTOTYPES
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 #include <stdio.h>
@@ -69,6 +71,28 @@ void win_destroy(struct context *ctx)
 	SDL_Quit();
 }
 
+void loop(struct context *ctx)
+{
+	GLuint vao;
+	glGenVertexArrays(1, &vao);
+	glBindVertexArray(vao);
+	
+	GLfloat vert[] = {
+		-1.0f, -1.0f, 0.0f,
+		1.0f, -1.0f, 0.0f,
+		0.0f, 1.0f, 0.0f,
+	};
+
+	GLuint vb;
+	glGenBuffers(1, &vb);
+
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+	SDL_GL_SwapWindow(ctx->win);
+
+	SDL_Delay(2000);
+}
+
 int main()
 {
 	struct context ctx;
@@ -79,11 +103,7 @@ int main()
 	if (ERR_ON(ret, "win_create failed\n"))
 		return EXIT_FAILURE;
 
-	glClearColor(1,0,0,1);
-	glClear(GL_COLOR_BUFFER_BIT);
-	SDL_GL_SwapWindow(ctx.win);
-
-	SDL_Delay(2000);
+	loop(&ctx);
 
 	win_destroy(&ctx);
 
