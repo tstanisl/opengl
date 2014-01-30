@@ -2,8 +2,14 @@
 
 #include <SDL.h>
 #include <SDL_opengl.h>
+
+#include <errno.h>
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 int __err(int cond, char *file, int line, char *fmt, ...)
 {
@@ -21,8 +27,10 @@ int __err(int cond, char *file, int line, char *fmt, ...)
 	return cond;
 }
 
+#define ERRSTR strerror(errno)
 #define ERR_ON(cond, ...) \
 	__err(cond, __FILE__, __LINE__, __VA_ARGS__)
+#define ERR(...) ERR_ON(1, __VA_ARGS__)
 #define SDLERR_ON(cond) \
 	ERR_ON(cond, "%s\n", SDL_GetError())
 
@@ -70,6 +78,58 @@ void win_destroy(struct context *ctx)
 	SDL_DestroyWindow(ctx->win);
 	SDL_Quit();
 }
+
+int shader_create(char *path, GLenum type, GLuint *id_ptr)
+{
+	int fd = open(path, O_RDONLY);
+	if (ERR_ON(fd < 0, "failed to open '%s': %s\n", path, ERRSTR))
+		return -1;
+
+	struct stat stat;
+	int ret = fstat(fd, &stat);
+	if (ERR_ON(ret < 0, "fstat() failed: %s\n", ERRSTR))
+		goto fail_fd;
+
+	int size = stat.st_size;
+
+	char *buf = malloc(size + 1);
+	if (ERR_ON(!buf, "malloc(%u) failed\n", size))
+		goto fail_fd;
+
+	ret = read(fd, buf, size);
+	if (ERR_ON(ret < 0, "read() failed\n"))
+		goto fail_buf;
+	size = ret;
+
+	GLuint id = glCreateShader(type);
+	if (ERR_ON(!id, "glCreateShader() failed\n"))
+		goto fail_buf;
+
+	glShaderSource(id, 1, (const GLchar **)&buf, NULL);
+	glCompileShader(id);
+
+	/* neither fd nor buf is needed any more */
+	free(buf);
+	close(fd);
+
+	glGetShaderiv(id, GL_COMPILE_STATUS, &ret);
+	if (ret == GL_FALSE) {
+		static char buf[256];
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &size);
+		glGetShaderInfoLog(id, 256, NULL, buf);
+		ERR("failed to compile shader '%s':\n\t%s\n", path, buf);
+		glDeleteShader(id);
+		return -1;
+	}
+
+	return 0;
+
+fail_buf:
+	free(buf);
+fail_fd:
+	close(fd);
+	return -1;
+} 
 
 void loop(struct context *ctx)
 {
