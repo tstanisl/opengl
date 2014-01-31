@@ -2,6 +2,7 @@
 #define MATRIX_H
 
 #include <math.h>
+#include <string.h>
 
 typedef float mat4[4][4];
 
@@ -36,8 +37,9 @@ static inline void mat4_translate(mat4 M, float tx, float ty, float tz)
 
 static inline void mat4_rotate_z(mat4 M, float rad)
 {
-	float x, y, c, s;
-	sincosf(rad, &s, &c);
+	float x, y;
+	float c = cosf(rad);
+	float s = sinf(rad);
 	x = M[0][0]; y = M[1][0];
 	M[0][0] = c * x - s * y;
 	M[1][0] = s * x + c * y;
