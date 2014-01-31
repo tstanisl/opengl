@@ -130,6 +130,46 @@ fail_fd:
 	return -1;
 } 
 
+int program_create(GLuint vertId, GLuint fragId)
+{
+	GLuint id = glCreateProgram();
+	if (ERR_ON(!id, "glCreateProgram() failed\n"))
+		return -1;
+	glAttachShader(id, vertId);
+	glAttachShader(id, fragId);
+	glLinkProgram(id);
+
+	int ret;
+	glGetProgramiv(id, GL_LINK_STATUS, &ret);
+	if (ret == GL_FALSE) {
+		static char buf[256];
+		glGetProgramInfoLog(id, 256, NULL, buf);
+		ERR("failed to link program:\n\t%s\n", buf);
+		glDeleteProgram(id);
+		return -1;
+	}
+	return id;
+}
+
+int program_create_by_path(char *vert_path, char *frag_path)
+{
+	int vertId = shader_create(vert_path, GL_VERTEX_SHADER);
+	if (ERR_ON(vertId < 0, "shader_create('%s') failed\n", vert_path)) 
+		return -1;
+	int fragId = shader_create(frag_path, GL_FRAGMENT_SHADER);
+	if (ERR_ON(fragId < 0, "shader_create('%s') failed\n", frag_path)) 
+		goto fail_vert;
+	int progId = program_create(vertId, fragId);
+	if (ERR_ON(progId < 0, "program_create() failed\n"))
+		goto fail_frag;
+	return progId;
+fail_frag:
+	glDeleteShader(fragId);
+fail_vert:
+	glDeleteShader(vertId);
+	return -1;
+}
+
 void loop(struct context *ctx)
 {
 	GLuint vao;
