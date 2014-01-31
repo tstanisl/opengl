@@ -172,12 +172,18 @@ fail_vert:
 
 void loop(struct context *ctx)
 {
+	int progId = program_create_by_path("simple.vert", "simple.frag");
+	if (ERR_ON(progId < 0, "program_create_by_path() failed\n"))
+		return;
+
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT);
+
+	glUseProgram(progId);
 
 	GLfloat vert[] = {
 		-1.0f, -1.0f, 0.0f,
