@@ -79,7 +79,7 @@ void win_destroy(struct context *ctx)
 	SDL_Quit();
 }
 
-int shader_create(char *path, GLenum type, GLuint *id_ptr)
+int shader_create(char *path, GLenum type)
 {
 	int fd = open(path, O_RDONLY);
 	if (ERR_ON(fd < 0, "failed to open '%s': %s\n", path, ERRSTR))
@@ -115,14 +115,13 @@ int shader_create(char *path, GLenum type, GLuint *id_ptr)
 	glGetShaderiv(id, GL_COMPILE_STATUS, &ret);
 	if (ret == GL_FALSE) {
 		static char buf[256];
-		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &size);
 		glGetShaderInfoLog(id, 256, NULL, buf);
 		ERR("failed to compile shader '%s':\n\t%s\n", path, buf);
 		glDeleteShader(id);
 		return -1;
 	}
 
-	return 0;
+	return id;
 
 fail_buf:
 	free(buf);
