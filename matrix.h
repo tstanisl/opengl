@@ -35,37 +35,25 @@ static inline void mat4_translate(mat4 M, float tx, float ty, float tz)
 	M[2][3] += M[3][3] * tz;
 }
 
-static inline void mat4_rotate_z(mat4 M, float rad)
-{
-	float x, y;
-	float c = cosf(rad);
-	float s = sinf(rad);
-	x = M[0][0]; y = M[1][0];
-	M[0][0] = c * x - s * y;
-	M[1][0] = s * x + c * y;
-	x = M[0][1]; y = M[1][1];
-	M[0][1] = c * x - s * y;
-	M[1][1] = s * x + c * y;
-	x = M[0][2]; y = M[1][2];
-	M[0][2] = c * x - s * y;
-	M[1][2] = s * x + c * y;
+#define __MAT4_ROTATE(__axis,__x,__y) \
+static inline void mat4_rotate_ ## __axis(mat4 M, float rad) \
+{ \
+	float x, y; \
+	float c = cosf(rad); \
+	float s = sinf(rad); \
+	x = M[__x][0]; y = M[__y][0]; \
+	M[__x][0] = c * x - s * y; \
+	M[__y][0] = s * x + c * y; \
+	x = M[__x][1]; y = M[__y][1]; \
+	M[__x][1] = c * x - s * y; \
+	M[__y][1] = s * x + c * y; \
+	x = M[__x][2]; y = M[__y][2]; \
+	M[__x][2] = c * x - s * y; \
+	M[__y][2] = s * x + c * y; \
 }
 
-#if 0
-static inline void mat4_rotate_y(mat4 M, float rad)
-{
-	float x, y, c, s;
-	sincosf(rad, &s, &c);
-	x = M[0][0]; y = M[1][0];
-	M[0][0] = c * x - s * y;
-	M[1][0] = s * x + c * y;
-	x = M[0][1]; y = M[1][1];
-	M[0][1] = c * x - s * y;
-	M[1][1] = s * x + c * y;
-	x = M[0][2]; y = M[1][2];
-	M[0][2] = c * x - s * y;
-	M[1][2] = s * x + c * y;
-}
-#endif
+__MAT4_ROTATE(x, 1, 2)
+__MAT4_ROTATE(y, 2, 0)
+__MAT4_ROTATE(z, 0, 1)
 
 #endif /* MATRIX_H */

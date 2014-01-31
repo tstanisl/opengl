@@ -198,7 +198,7 @@ void loop(struct context *ctx)
 	mat4_identity(MVP);
 	mat4_scale(MVP, 0.5, 0.5, 0.5);
 	mat4_translate(MVP, 0.0, 1.0, 0.0);
-	mat4_rotate_z(MVP, 0.1);
+	mat4_rotate_z(MVP, 0.4);
 
 	GLint mvpId = glGetUniformLocation(progId, "MVP");
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
