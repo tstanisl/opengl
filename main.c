@@ -1,5 +1,7 @@
 #define GL_GLEXT_PROTOTYPES
 
+#include "matrix.h"
+
 #include <SDL.h>
 #include <SDL_opengl.h>
 
@@ -184,6 +186,15 @@ void loop(struct context *ctx)
 	glClear(GL_COLOR_BUFFER_BIT);
 
 	glUseProgram(progId);
+
+	mat4 MVP;
+	mat4_identity(MVP);
+
+	GLint mvpId = glGetUniformLocation(progId, "MVP");
+	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
+		return;
+
+	glUniformMatrix4fv(mvpId, 1, GL_FALSE, (void*)MVP);
 
 	GLfloat vert[] = {
 		-1.0f, -1.0f, 0.0f,
