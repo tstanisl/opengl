@@ -172,6 +172,13 @@ fail_vert:
 	return -1;
 }
 
+static inline void mat4_dump(mat4 M)
+{
+	puts("-----");
+	for (int i = 0; i < 4; ++i)
+		printf(" %f %f %f %f\n", M[i][0], M[i][1], M[i][2], M[i][3]);
+}
+
 void loop(struct context *ctx)
 {
 	int progId = program_create_by_path("simple.vert", "simple.frag");
@@ -189,12 +196,15 @@ void loop(struct context *ctx)
 
 	mat4 MVP;
 	mat4_identity(MVP);
+	mat4_scale(MVP, 0.5, 0.5, 0.5);
+	mat4_translate(MVP, 0.0, 1.0, 0.0);
+	mat4_rotate_z(MVP, 0.1);
 
 	GLint mvpId = glGetUniformLocation(progId, "MVP");
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
 
-	glUniformMatrix4fv(mvpId, 1, GL_FALSE, (void*)MVP);
+	glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
 
 	GLfloat vert[] = {
 		-1.0f, -1.0f, 0.0f,
