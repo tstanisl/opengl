@@ -50,6 +50,9 @@ static inline void mat4_rotate_ ## __axis(mat4 M, float rad) \
 	x = M[__x][2]; y = M[__y][2]; \
 	M[__x][2] = c * x - s * y; \
 	M[__y][2] = s * x + c * y; \
+	x = M[__x][3]; y = M[__y][3]; \
+	M[__x][3] = c * x - s * y; \
+	M[__y][3] = s * x + c * y; \
 }
 
 __MAT4_ROTATE(x, 1, 2)
