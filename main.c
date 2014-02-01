@@ -183,6 +183,18 @@ static inline void mat4_dump(mat4 M)
 		printf(" %f %f %f %f\n", M[i][0], M[i][1], M[i][2], M[i][3]);
 }
 
+static int process_event(void)
+{
+	SDL_Event ev;
+	while (SDL_PollEvent(&ev)) {
+		if (ev.type == SDL_WINDOWEVENT) {
+			if (ev.window.event == SDL_WINDOWEVENT_CLOSE)
+				return 0;
+		}
+	}
+	return 1;
+}
+
 void loop(struct context *ctx)
 {
 	int progId = program_create_by_path("simple.vert", "simple.frag");
@@ -252,13 +264,14 @@ void loop(struct context *ctx)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	for (int i = 0; i < 100; ++i) {
+	float angle = 0.0f;
+	while (process_event()) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mat4_identity(MVP);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
-		mat4_rotate_y(MVP, M_PI / 100.0f * i);
+		mat4_rotate_y(MVP, angle);
 		mat4_mul(MVP, P);
 
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
@@ -266,7 +279,8 @@ void loop(struct context *ctx)
 		// drawing
 		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 		SDL_GL_SwapWindow(ctx->win);
-		SDL_Delay(50);
+		angle += 0.01f;
+		SDL_Delay(20);
 	}
 
 	glDisableVertexAttribArray(0);
