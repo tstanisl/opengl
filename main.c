@@ -55,6 +55,10 @@ int win_create(struct context *ctx)
 	if (SDLERR_ON(ret < 0))
 		goto fail_sdl;
 
+	ret = SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+	if (SDLERR_ON(ret < 0))
+		goto fail_sdl;
+
 	ctx->win = SDL_CreateWindow("OpenGL learning", 0, 0, 640, 480,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	if (SDLERR_ON(!ctx->win))
@@ -196,9 +200,42 @@ void loop(struct context *ctx)
 		return;
 
 	GLfloat vert[] = {
-		-1.0f, -1.0f, 0.0f,
-		1.0f, -1.0f, 0.0f,
-		0.0f, 1.0f, 0.0f,
+		-1.0f,-1.0f,-1.0f, // triangle 1 : begin
+		-1.0f,-1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f, // triangle 1 : end
+		1.0f, 1.0f,-1.0f, // triangle 2 : begin
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f, // triangle 2 : end
+		1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+		-1.0f,-1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		-1.0f,-1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f,-1.0f,
+		1.0f,-1.0f,-1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f,-1.0f,
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f,-1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f, 1.0f, 1.0f,
+		-1.0f, 1.0f, 1.0f,
+		1.0f,-1.0f, 1.0f,
 	};
 
 	GLuint vb;
@@ -210,21 +247,24 @@ void loop(struct context *ctx)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0L);
 
 	mat4 MVP, P;
-	mat4_perspective(P, 0.0, 10.0, M_PI / 4, 640.f / 480.0f);
+	mat4_perspective(P, 1, 10.0, M_PI / 4, 640.f / 480.0f);
+
+	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LESS);
 
 	for (int i = 0; i < 100; ++i) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mat4_identity(MVP);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
-		mat4_rotate_z(MVP, M_PI / 100.0f * i);
+		mat4_rotate_y(MVP, M_PI / 100.0f * i);
 		mat4_mul(MVP, P);
 
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
 
 		// drawing
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 		SDL_GL_SwapWindow(ctx->win);
 		SDL_Delay(50);
 	}
