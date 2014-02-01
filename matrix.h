@@ -56,4 +56,26 @@ __MAT4_ROTATE(x, 1, 2)
 __MAT4_ROTATE(y, 2, 0)
 __MAT4_ROTATE(z, 0, 1)
 
+static inline void mat4_perspective(mat4 M, float near, float far,
+	float rad, float w_h_ratio)
+{
+	memset(M, 0, sizeof(mat4));
+	M[0][0] = 1.0f / tanf(0.5 * rad);
+	M[1][1] = M[0][0] * w_h_ratio;
+	M[2][2] = -(far + near) / (far - near);
+	M[2][3] = -2.0f * far * near / (far - near);	
+	M[3][2] = -1.0f;
+}
+
+static inline void mat4_mul(mat4 M, mat4 A)
+{
+	mat4 T;
+	memcpy(T, M, sizeof(mat4));
+	memset(M, 0, sizeof(mat4));
+	for (int i = 0; i < 4; ++i)
+		for (int k = 0; k < 4; ++k)
+			for (int j = 0; j < 4; ++j)
+				M[i][j] += A[i][k] * T[k][j];
+}
+
 #endif /* MATRIX_H */
