@@ -189,28 +189,11 @@ void loop(struct context *ctx)
 	glGenVertexArrays(1, &vao);
 	glBindVertexArray(vao);
 
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
 	glUseProgram(progId);
-
-	mat4 MVP;
-	mat4_identity(MVP);
-	//mat4_scale(MVP, 0.5, 0.5, 0.5);
-	mat4_translate(MVP, 0.0, 0.0, -6.5);
-	mat4_dump(MVP);
-	mat4_rotate_z(MVP, M_PI / 2);
-	mat4 P;
-	mat4_perspective(P, 0.0, 10.0, M_PI / 4, 640.f / 480.0f);
-	mat4_dump(P);
-	mat4_mul(MVP, P);
-	mat4_dump(MVP);
 
 	GLint mvpId = glGetUniformLocation(progId, "MVP");
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
-
-	glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
 
 	GLfloat vert[] = {
 		-1.0f, -1.0f, 0.0f,
@@ -226,14 +209,27 @@ void loop(struct context *ctx)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0L);
 
-	// drawing
-	glDrawArrays(GL_TRIANGLES, 0, 3);
+	mat4 MVP, P;
+	mat4_perspective(P, 0.0, 10.0, M_PI / 4, 640.f / 480.0f);
+
+	for (int i = 0; i < 100; ++i) {
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		mat4_identity(MVP);
+		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_rotate_z(MVP, M_PI / 100.0f * i);
+		mat4_mul(MVP, P);
+
+		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
+
+		// drawing
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		SDL_GL_SwapWindow(ctx->win);
+		SDL_Delay(50);
+	}
 
 	glDisableVertexAttribArray(0);
-
-	SDL_GL_SwapWindow(ctx->win);
-
-	SDL_Delay(2000);
 }
 
 int main()
