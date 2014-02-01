@@ -59,7 +59,7 @@ int win_create(struct context *ctx)
 	if (SDLERR_ON(ret < 0))
 		goto fail_sdl;
 
-	ctx->win = SDL_CreateWindow("OpenGL learning", 0, 0, 640, 480,
+	ctx->win = SDL_CreateWindow("OpenGL learning", 0, 0, 1280, 1024,
 		SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN);
 	if (SDLERR_ON(!ctx->win))
 		goto fail_sdl;
@@ -270,14 +270,29 @@ void loop(struct context *ctx)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mat4_identity(MVP);
-		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_scale(MVP, 0.5, 0.5, 0.5);
+		mat4_rotate_z(MVP, -angle);
+		mat4_translate(MVP, 0.0, 0.0, -1.5);
 		mat4_rotate_y(MVP, angle);
+		mat4_translate(MVP, 0.0, 0.0, -6.5);
 		mat4_mul(MVP, P);
 
+		// drawing
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
+		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+
+		mat4_identity(MVP);
+		mat4_scale(MVP, 0.5, 0.5, 0.5);
+		mat4_rotate_z(MVP, angle);
+		mat4_translate(MVP, 0.0, 0.0, 1.5);
+		mat4_rotate_y(MVP, angle);
+		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_mul(MVP, P);
 
 		// drawing
+		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
 		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+
 		SDL_GL_SwapWindow(ctx->win);
 		angle += 0.01f;
 		SDL_Delay(20);
