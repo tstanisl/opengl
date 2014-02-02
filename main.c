@@ -204,6 +204,7 @@ static int process_event(struct camera *c)
 			int width, height;
 			SDL_GetWindowSize(win, &width, &height);
 			c->theta = (((float)ev.motion.x / width) - 0.5) * 4 * M_PI;
+			c->azimuth = (((float)ev.motion.y / height) - 0.5) * M_PI;
 		}
 	}
 	return 1;
@@ -292,6 +293,7 @@ void loop(struct context *ctx)
 		mat4_rotate_y(MVP, angle);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
 		mat4_rotate_y(MVP, cam.theta);
+		mat4_rotate_x(MVP, cam.azimuth);
 		mat4_mul(MVP, P);
 
 		// drawing
@@ -305,6 +307,7 @@ void loop(struct context *ctx)
 		mat4_rotate_y(MVP, angle);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
 		mat4_rotate_y(MVP, cam.theta);
+		mat4_rotate_x(MVP, cam.azimuth);
 		mat4_mul(MVP, P);
 
 		// drawing
