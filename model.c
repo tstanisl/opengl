@@ -25,31 +25,6 @@ static int n_normal;
 static struct ivertex *hash[HSIZE];
 static struct ivertex ivertex[VMAX];
 
-static int skip_ws(FILE *f, int line)
-{
-	bool comment = false;
-	for (;;) {
-		int c = fgetc(f);
-		if (comment) {
-			if (c == EOF)
-				return line;
-			if (c == '\n') {
-				comment = false;
-				++line;
-			}
-		} else {
-			if (c == '#') {
-				comment = true;
-			} else if (c == '\n') {
-				++line;
-			} else if (c != '\\' && !isspace(c)) {
-				ungetc(c, f);
-				return line;
-			}
-		}
-	}
-}
-
 enum token {
 	TOK_EOF,
 	TOK_STRING,
@@ -59,34 +34,62 @@ enum token {
 };
 
 #define TOK_SIZE 64
-union payload {
-	float val;
+
+struct lxr {
+	FILE *f;
+	int line;
 	char str[TOK_SIZE];
+	float val;
 };
 
-static enum token get_next(FILE *f, union payload *payload, int *line)
+static void skip_ws(struct lxr *lxr)
 {
-	*line = skip_ws(f, *line);
-	int c = fgetc(f);
+	bool comment = false;
+	for (;;) {
+		int c = fgetc(lxr->f);
+		if (comment) {
+			if (c == EOF)
+				return;
+			if (c == '\n') {
+				comment = false;
+				++lxr->line;
+			}
+		} else {
+			if (c == '#') {
+				comment = true;
+			} else if (c == '\n') {
+				++lxr->line;
+			} else if (c != '\\' && !isspace(c)) {
+				ungetc(c, lxr->f);
+				return;
+			}
+		}
+	}
+}
+
+static enum token lxr_get_next(struct lxr *lxr)
+{
+	skip_ws(lxr);
+	int c = fgetc(lxr->f);
 	if (c == '/')
 		return TOK_SLASH;
 	if (c == EOF)
 		return TOK_EOF;
 	if (c == '.' || c == '+' || isdigit(c)) {
-		ungetc(c, f);
-		int ret = fscanf(f, "%f", &payload->val);
+		ungetc(c, lxr->f);
+		int ret = fscanf(lxr->f, "%f", &lxr->val);
 		if (ret != 1) {
-			strcat(payload->str, "invalid number");
+			strcat(lxr->str, "invalid number");
 			return TOK_ERROR;
 		}
 		return TOK_NUMBER;
 	}
 	if (isgraph(c)) {
-		ungetc(c, f);
-		fscanf(f, "%63s", payload->str);
+		ungetc(c, lxr->f);
+		fscanf(lxr->f, "%63s", lxr->str);
 		return TOK_STRING;
 	}
-	sprintf(payload->str, "unexpected '%c'", c);
+	sprintf(lxr->str, "unexpected '%c'", c);
 	return TOK_ERROR;
 }
 
@@ -96,21 +99,20 @@ struct model *model_load(char *path)
 	if (ERR_ON(!f, "fopen(\"%s\"): %s\n", path, ERRSTR))
 		return NULL;
 
-	int line = 1;
+	struct lxr lxr = { .line = 1, .f = f };
 	for (;;) {
-		union payload p;
-		enum token t = get_next(f, &p, &line);
+		enum token t = lxr_get_next(&lxr);
 		if (t == TOK_EOF) {
 			break;
 		} else if (t == TOK_ERROR) {
-			ERR("%s(%d): %s\n", path, line, p.str);
+			ERR("%s(%d): %s\n", path, lxr.line, lxr.str);
 			goto fail_f;
 		} else if (t == TOK_SLASH) {
-			printf("%3d: slash\n", line);
+			printf("%3d: slash\n", lxr.line);
 		} else if (t == TOK_NUMBER) {
-			printf("%3d: number %g\n", line, p.val);
+			printf("%3d: number %g\n", lxr.line, lxr.val);
 		} else {
-			printf("%3d: string %s\n", line, p.str);
+			printf("%3d: string %s\n", lxr.line, lxr.str);
 		}
 	}
 	
