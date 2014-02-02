@@ -190,6 +190,7 @@ struct camera {
 
 static int process_event(struct camera *c)
 {
+	const float speed = 0.1;
 	SDL_Event ev;
 	while (SDL_PollEvent(&ev)) {
 		if (ev.type == SDL_WINDOWEVENT) {
@@ -199,6 +200,22 @@ static int process_event(struct camera *c)
 			SDL_Keycode k = ev.key.keysym.sym;
 			if (k == SDLK_q || k == SDLK_ESCAPE)
 				return 0;
+			if (k == SDLK_w) {
+				c->x -= speed * sinf(c->theta);
+				c->z += speed * cosf(c->theta);
+			}
+			if (k == SDLK_s) {
+				c->x += speed * sinf(c->theta);
+				c->z -= speed * cosf(c->theta);
+			}
+			if (k == SDLK_d) {
+				c->x -= speed * cosf(c->theta);
+				c->z -= speed * sinf(c->theta);
+			}
+			if (k == SDLK_a) {
+				c->x += speed * cosf(c->theta);
+				c->z += speed * sinf(c->theta);
+			}
 		} else if (ev.type == SDL_MOUSEMOTION) {
 			SDL_Window* win = SDL_GetWindowFromID(ev.motion.windowID);
 			int width, height;
@@ -274,14 +291,13 @@ void loop(struct context *ctx)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0L);
 
 	mat4 MVP, P;
-	mat4_perspective(P, 1, 10.0, M_PI / 4, 640.f / 480.0f);
+	mat4_perspective(P, 1, 30.0, M_PI / 4, 640.f / 480.0f);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
 	float angle = 0.0f;
-	struct camera cam;
-	memset(&cam, 0, sizeof(cam));
+	struct camera cam = { .z = -6.5 };
 	while (process_event(&cam)) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -291,7 +307,7 @@ void loop(struct context *ctx)
 		mat4_rotate_z(MVP, -angle);
 		mat4_translate(MVP, 0.0, 0.0, -1.5);
 		mat4_rotate_y(MVP, angle);
-		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_translate(MVP, cam.x, cam.y, cam.z);
 		mat4_rotate_y(MVP, cam.theta);
 		mat4_rotate_x(MVP, cam.azimuth);
 		mat4_mul(MVP, P);
@@ -305,7 +321,7 @@ void loop(struct context *ctx)
 		mat4_rotate_z(MVP, angle);
 		mat4_translate(MVP, 0.0, 0.0, 1.5);
 		mat4_rotate_y(MVP, angle);
-		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_translate(MVP, cam.x, cam.y, cam.z);
 		mat4_rotate_y(MVP, cam.theta);
 		mat4_rotate_x(MVP, cam.azimuth);
 		mat4_mul(MVP, P);
@@ -315,7 +331,7 @@ void loop(struct context *ctx)
 		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 
 		SDL_GL_SwapWindow(ctx->win);
-		angle += 0.01f;
+		angle += 0.00f;
 		SDL_Delay(20);
 	}
 
