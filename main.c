@@ -2,6 +2,7 @@
 
 #include "matrix.h"
 #include "debug.h"
+#include "model.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -334,6 +335,8 @@ int main()
 	loop(&ctx);
 
 	win_destroy(&ctx);
+
+	model_load("models/cube.obj");
 
 	return 0;
 }
