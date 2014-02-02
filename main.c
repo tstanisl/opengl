@@ -1,6 +1,7 @@
 #define GL_GLEXT_PROTOTYPES
 
 #include "matrix.h"
+#include "debug.h"
 
 #include <SDL.h>
 #include <SDL_opengl.h>
@@ -13,26 +14,6 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-int __err(int cond, char *file, int line, char *fmt, ...)
-{
-	if (!cond)
-		return 0;
-
-	va_list va;
-	va_start(va, fmt);
-
-	fprintf(stderr, "Error: %s(%d): ", file, line);
-	vfprintf(stderr, fmt, va);
-
-	va_end(va);
-
-	return cond;
-}
-
-#define ERRSTR strerror(errno)
-#define ERR_ON(cond, ...) \
-	__err(cond, __FILE__, __LINE__, __VA_ARGS__)
-#define ERR(...) ERR_ON(1, __VA_ARGS__)
 #define SDLERR_ON(cond) \
 	ERR_ON(cond, "%s\n", SDL_GetError())
 
