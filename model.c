@@ -38,6 +38,7 @@ enum token {
 struct lxr {
 	FILE *f;
 	int line;
+	enum token next;
 	char str[TOK_SIZE];
 	float val;
 };
@@ -93,20 +94,36 @@ static enum token lxr_get_next(struct lxr *lxr)
 	return TOK_ERROR;
 }
 
-struct model *model_load(char *path)
+void lxr_consume(struct lxr *lxr)
 {
-	FILE *f = fopen(path, "r");
-	if (ERR_ON(!f, "fopen(\"%s\"): %s\n", path, ERRSTR))
-		return NULL;
+	lxr->next = lxr_get_next(lxr);
+}
 
+static int model_process_obj(FILE *f)
+{
 	struct lxr lxr = { .line = 1, .f = f };
-	for (;;) {
-		enum token t = lxr_get_next(&lxr);
-		if (t == TOK_EOF) {
-			break;
-		} else if (t == TOK_ERROR) {
-			ERR("%s(%d): %s\n", path, lxr.line, lxr.str);
-			goto fail_f;
+	lxr_consume(&lxr);
+	int ret = 0;
+	while (ret == 0) {
+		enum token t = lxr.next;
+		if (t == TOK_EOF)
+			return 0;
+#if 0
+		if (ERR_ON(t != TOK_STRING, "syntax error at line %d\n", lxr.line))
+			return -1;
+		if (strcmp(lxr.str, "v") == 0)
+			ret = model_process_v(&lxr);
+		else if (strcmp(lxr.str, "vt") == 0)
+			ret = model_process_vt(&lxr);
+		else if (strcmp(lxr.str, "vn") == 0)
+			ret = model_process_vn(&lxr);
+		else if (strcmp(lxr.str, "f") == 0)
+			ret = model_process_face(&lxr);
+#endif
+#if 1
+		if (t == TOK_ERROR) {
+			ERR("%3d: error: %s\n", lxr.line, lxr.str);
+			return -1;
 		} else if (t == TOK_SLASH) {
 			printf("%3d: slash\n", lxr.line);
 		} else if (t == TOK_NUMBER) {
@@ -114,8 +131,23 @@ struct model *model_load(char *path)
 		} else {
 			printf("%3d: string %s\n", lxr.line, lxr.str);
 		}
+		lxr_consume(&lxr);
+#endif
 	}
-	
+	return -1;
+}
+
+struct model *model_load(char *path)
+{
+	FILE *f = fopen(path, "r");
+	if (ERR_ON(!f, "fopen(\"%s\"): %s\n", path, ERRSTR))
+		return NULL;
+
+	int ret = model_process_obj(f);
+	if (ERR_ON(ret, "failed to process '%s'\n", path))
+		goto fail_f;
+
+	fclose(f);
 	return NULL;
 fail_f:
 	fclose(f);
