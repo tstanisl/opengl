@@ -15,6 +15,7 @@ struct ivertex {
 	struct ivertex *next;
 };
 
+/*
 static float position[VMAX][3];
 static int n_position;
 static float texture[VMAX][2];
@@ -24,9 +25,11 @@ static int n_normal;
 
 static struct ivertex *hash[HSIZE];
 static struct ivertex ivertex[VMAX];
+*/
 
 enum token {
 	TOK_EOF,
+	TOK_EOL,
 	TOK_STRING,
 	TOK_SLASH,
 	TOK_NUMBER,
@@ -43,26 +46,38 @@ struct lxr {
 	float val;
 };
 
-static void skip_ws(struct lxr *lxr)
+static int skip_ws(struct lxr *lxr)
 {
-	bool comment = false;
+	enum {
+		ST_NONE,
+		ST_COMMENT,
+		ST_BSLASH,
+	} st = ST_NONE;
 	for (;;) {
 		int c = fgetc(lxr->f);
-		if (comment) {
-			if (c == EOF)
-				return;
+		if (c == EOF)
+			return 0;
+		if (st == ST_NONE) {
+			if (c == '#') {
+				st = ST_COMMENT;
+			} else if (c == '\\') {
+				st = ST_BSLASH;
+			} else if (c != ' ' && c != '\t') {
+				ungetc(c, lxr->f);
+				return 0;
+			}
+		} else if (st == ST_COMMENT) {
 			if (c == '\n') {
-				comment = false;
+				st = ST_NONE;
 				++lxr->line;
 			}
-		} else {
-			if (c == '#') {
-				comment = true;
-			} else if (c == '\n') {
+		} else if (st == ST_BSLASH) {
+			if (c == '\n') {
+				st = ST_NONE;
 				++lxr->line;
-			} else if (c != '\\' && !isspace(c)) {
-				ungetc(c, lxr->f);
-				return;
+			} else if (!isspace(c)) {
+				strcat(lxr->str, "non-space after \\");
+				return -1;
 			}
 		}
 	}
@@ -70,8 +85,14 @@ static void skip_ws(struct lxr *lxr)
 
 static enum token lxr_get_next(struct lxr *lxr)
 {
-	skip_ws(lxr);
+	int ret = skip_ws(lxr);
+	if (ret)
+		return TOK_ERROR;
 	int c = fgetc(lxr->f);
+	if (c == '\n') {
+		++lxr->line;
+		return TOK_EOL;
+	}
 	if (c == '/')
 		return TOK_SLASH;
 	if (c == EOF)
@@ -124,6 +145,8 @@ static int model_process_obj(FILE *f)
 		if (t == TOK_ERROR) {
 			ERR("%3d: error: %s\n", lxr.line, lxr.str);
 			return -1;
+		} else if (t == TOK_EOL) {
+			printf("%3d: end-of-line\n", lxr.line);
 		} else if (t == TOK_SLASH) {
 			printf("%3d: slash\n", lxr.line);
 		} else if (t == TOK_NUMBER) {
