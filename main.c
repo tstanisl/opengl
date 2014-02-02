@@ -183,13 +183,27 @@ static inline void mat4_dump(mat4 M)
 		printf(" %f %f %f %f\n", M[i][0], M[i][1], M[i][2], M[i][3]);
 }
 
-static int process_event(void)
+struct camera {
+	float x, y, z;
+	float theta, azimuth;
+};
+
+static int process_event(struct camera *c)
 {
 	SDL_Event ev;
 	while (SDL_PollEvent(&ev)) {
 		if (ev.type == SDL_WINDOWEVENT) {
 			if (ev.window.event == SDL_WINDOWEVENT_CLOSE)
 				return 0;
+		} else if (ev.type == SDL_KEYDOWN) {
+			SDL_Keycode k = ev.key.keysym.sym;
+			if (k == SDLK_q || k == SDLK_ESCAPE)
+				return 0;
+		} else if (ev.type == SDL_MOUSEMOTION) {
+			SDL_Window* win = SDL_GetWindowFromID(ev.motion.windowID);
+			int width, height;
+			SDL_GetWindowSize(win, &width, &height);
+			c->theta = (((float)ev.motion.x / width) - 0.5) * 4 * M_PI;
 		}
 	}
 	return 1;
@@ -265,7 +279,9 @@ void loop(struct context *ctx)
 	glDepthFunc(GL_LESS);
 
 	float angle = 0.0f;
-	while (process_event()) {
+	struct camera cam;
+	memset(&cam, 0, sizeof(cam));
+	while (process_event(&cam)) {
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -275,6 +291,7 @@ void loop(struct context *ctx)
 		mat4_translate(MVP, 0.0, 0.0, -1.5);
 		mat4_rotate_y(MVP, angle);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_rotate_y(MVP, cam.theta);
 		mat4_mul(MVP, P);
 
 		// drawing
@@ -287,6 +304,7 @@ void loop(struct context *ctx)
 		mat4_translate(MVP, 0.0, 0.0, 1.5);
 		mat4_rotate_y(MVP, angle);
 		mat4_translate(MVP, 0.0, 0.0, -6.5);
+		mat4_rotate_y(MVP, cam.theta);
 		mat4_mul(MVP, P);
 
 		// drawing
