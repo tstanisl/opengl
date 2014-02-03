@@ -17,9 +17,9 @@ struct ivertex {
 
 static float position[VMAX][3];
 static int n_position;
-/*
 static float texture[VMAX][2];
 static int n_texture;
+/*
 static float normal[VMAX][3];
 static int n_normal;
 
@@ -159,10 +159,39 @@ static int model_process_v(struct lxr *lxr)
 	/* skip fourth coordinate */
 	if (lxr->next == TOK_NUMBER)
 		lxr_consume(lxr);
-	if (ERR_ON(!lxr_eol(lxr), "(%d)v must end with newline\n", lxr->line))
+	if (ERR_ON(!lxr_eol(lxr), "(%d) v must end with newline\n", lxr->line))
 		return -1;
 	lxr_consume(lxr);
 	++n_position;
+	return 0;
+}
+
+static int model_process_vt(struct lxr *lxr)
+{
+	printf("%s\n", __func__);
+	lxr_consume(lxr);
+	if (ERR_ON(n_texture >= VMAX, "too many texture points\n"))
+		return -1;
+	if (lxr->next != TOK_NUMBER) {
+		ERR("(%d) vt: coordinate expected\n", lxr->line);
+		return -1;
+	}
+	texture[n_texture][0] = lxr->val;
+	lxr_consume(lxr);
+	/* optional second coordinate */
+	if (lxr->next == TOK_NUMBER) {
+		texture[n_texture][1] = lxr->val;
+		lxr_consume(lxr);
+	} else {
+		texture[n_texture][1] = 0.0f;
+	}
+	/* skip third coordinate */
+	if (lxr->next == TOK_NUMBER)
+		lxr_consume(lxr);
+	if (ERR_ON(!lxr_eol(lxr), "(%d) vt must end with newline\n", lxr->line))
+		return -1;
+	lxr_consume(lxr);
+	++n_texture;
 	return 0;
 }
 
@@ -190,9 +219,9 @@ static int model_process_obj(FILE *f)
 			return -1;
 		if (strcmp(lxr.str, "v") == 0)
 			ret = model_process_v(&lxr);
-#if 0
 		else if (strcmp(lxr.str, "vt") == 0)
 			ret = model_process_vt(&lxr);
+#if 0
 		else if (strcmp(lxr.str, "vn") == 0)
 			ret = model_process_vn(&lxr);
 		else if (strcmp(lxr.str, "f") == 0)
