@@ -15,9 +15,9 @@ struct ivertex {
 	struct ivertex *next;
 };
 
-/*
 static float position[VMAX][3];
 static int n_position;
+/*
 static float texture[VMAX][2];
 static int n_texture;
 static float normal[VMAX][3];
@@ -97,7 +97,7 @@ static enum token lxr_get_next(struct lxr *lxr)
 		return TOK_SLASH;
 	if (c == EOF)
 		return TOK_EOF;
-	if (c == '.' || c == '+' || isdigit(c)) {
+	if (c == '.' || c == '-' || c == '+' || isdigit(c)) {
 		ungetc(c, lxr->f);
 		int ret = fscanf(lxr->f, "%f", &lxr->val);
 		if (ret != 1) {
@@ -118,6 +118,63 @@ static enum token lxr_get_next(struct lxr *lxr)
 void lxr_consume(struct lxr *lxr)
 {
 	lxr->next = lxr_get_next(lxr);
+#if 1
+	enum token t = lxr->next;
+	if (t == TOK_ERROR) {
+		printf("%3d: error: %s\n", lxr->line, lxr->str);
+	} else if (t == TOK_EOF) {
+		printf("%3d: eof\n", lxr->line);
+	} else if (t == TOK_EOL) {
+		printf("%3d: end-of-line\n", lxr->line);
+	} else if (t == TOK_SLASH) {
+		printf("%3d: slash\n", lxr->line);
+	} else if (t == TOK_NUMBER) {
+		printf("%3d: number %g\n", lxr->line, lxr->val);
+	} else {
+		printf("%3d: string %s\n", lxr->line, lxr->str);
+	}
+#endif
+}
+
+static bool lxr_eol(struct lxr *lxr)
+{
+	return lxr->next == TOK_EOL || lxr->next == TOK_EOF;
+}
+
+static int model_process_v(struct lxr *lxr)
+{
+	printf("%s\n", __func__);
+	lxr_consume(lxr);
+	if (ERR_ON(n_position >= VMAX, "too many vertices\n"))
+		return -1;
+	for (int i = 0; i < 3; ++i) {
+		if (lxr->next != TOK_NUMBER) {
+			ERR("(%d) after v number expected at position %d\n",
+				lxr->line, i + 1);
+			return -1;
+		}
+		position[n_position][i] = lxr->val;
+		lxr_consume(lxr);
+	}
+	/* skip fourth coordinate */
+	if (lxr->next == TOK_NUMBER)
+		lxr_consume(lxr);
+	if (ERR_ON(!lxr_eol(lxr), "(%d)v must end with newline\n", lxr->line))
+		return -1;
+	lxr_consume(lxr);
+	++n_position;
+	return 0;
+}
+
+static int model_process_unknown(struct lxr *lxr)
+{
+	printf("%s\n", __func__);
+	lxr_consume(lxr);
+	while (!lxr_eol(lxr))
+		lxr_consume(lxr);
+	printf("%s finish\n", __func__);
+	lxr_consume(lxr);
+	return 0;
 }
 
 static int model_process_obj(FILE *f)
@@ -129,11 +186,11 @@ static int model_process_obj(FILE *f)
 		enum token t = lxr.next;
 		if (t == TOK_EOF)
 			return 0;
-#if 0
-		if (ERR_ON(t != TOK_STRING, "syntax error at line %d\n", lxr.line))
+		if (ERR_ON(t != TOK_STRING, "(%d) syntax error\n", lxr.line))
 			return -1;
 		if (strcmp(lxr.str, "v") == 0)
 			ret = model_process_v(&lxr);
+#if 0
 		else if (strcmp(lxr.str, "vt") == 0)
 			ret = model_process_vt(&lxr);
 		else if (strcmp(lxr.str, "vn") == 0)
@@ -141,21 +198,8 @@ static int model_process_obj(FILE *f)
 		else if (strcmp(lxr.str, "f") == 0)
 			ret = model_process_face(&lxr);
 #endif
-#if 1
-		if (t == TOK_ERROR) {
-			ERR("%3d: error: %s\n", lxr.line, lxr.str);
-			return -1;
-		} else if (t == TOK_EOL) {
-			printf("%3d: end-of-line\n", lxr.line);
-		} else if (t == TOK_SLASH) {
-			printf("%3d: slash\n", lxr.line);
-		} else if (t == TOK_NUMBER) {
-			printf("%3d: number %g\n", lxr.line, lxr.val);
-		} else {
-			printf("%3d: string %s\n", lxr.line, lxr.str);
-		}
-		lxr_consume(&lxr);
-#endif
+		else
+			ret = model_process_unknown(&lxr);
 	}
 	return -1;
 }
