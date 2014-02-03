@@ -264,9 +264,10 @@ static int model_process_ivertex(struct lxr *lxr, struct ivertex *iv)
 		iv->position = n_position - iv->position + 1;
 	if (ERR_ON(iv->position <= 0, "(%d): invalid position\n", lxr->line))
 		return -1;
+	lxr_consume(lxr); // 1st index
 	if (lxr->next != TOK_SLASH)
 		return 0;
-	lxr_consume(lxr);
+	lxr_consume(lxr); // slash
 	if (lxr->next == TOK_NUMBER) {
 		iv->texture = lxr->val;
 		if (iv->texture < 0)
@@ -275,10 +276,11 @@ static int model_process_ivertex(struct lxr *lxr, struct ivertex *iv)
 			ERR("(%d): invalid texture\n", lxr->line);
 			return -1;
 		}
-		lxr_consume(lxr);
+		lxr_consume(lxr); // 2nd index
 	}
 	if (lxr->next != TOK_SLASH)
 		return 0;
+	lxr_consume(lxr); // 2nd slash
 	if (lxr->next != TOK_NUMBER) {
 		ERR("(%d): invalid vertex format\n", lxr->line);
 		return -1;
@@ -290,7 +292,7 @@ static int model_process_ivertex(struct lxr *lxr, struct ivertex *iv)
 		ERR("(%d): invalid normal\n", lxr->line);
 		return -1;
 	}
-	lxr_consume(lxr);
+	lxr_consume(lxr); // 3rd index
 	return 0;
 }
 
@@ -332,6 +334,7 @@ static int model_process_face(struct lxr *lxr)
 		ptr = ivertex_find(&iv);
 		if (ERR_ON(!ptr, "ivertex_find failed\n"))
 			return -1;
+		printf("ivertex = %ld\n", ptr - ivertex);
 		ref = ptr;
 		/* TODO: add vertex to elements */
 	}
