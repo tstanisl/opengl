@@ -19,10 +19,10 @@ static float position[VMAX][3];
 static int n_position;
 static float texture[VMAX][2];
 static int n_texture;
-/*
 static float normal[VMAX][3];
 static int n_normal;
 
+/*
 static struct ivertex *hash[HSIZE];
 static struct ivertex ivertex[VMAX];
 */
@@ -195,6 +195,28 @@ static int model_process_vt(struct lxr *lxr)
 	return 0;
 }
 
+static int model_process_vn(struct lxr *lxr)
+{
+	printf("%s\n", __func__);
+	lxr_consume(lxr);
+	if (ERR_ON(n_normal >= VMAX, "too many normals\n"))
+		return -1;
+	for (int i = 0; i < 3; ++i) {
+		if (lxr->next != TOK_NUMBER) {
+			ERR("(%d) after v number expected at normal %d\n",
+				lxr->line, i + 1);
+			return -1;
+		}
+		normal[n_normal][i] = lxr->val;
+		lxr_consume(lxr);
+	}
+	if (ERR_ON(!lxr_eol(lxr), "(%d) vn must end with newline\n", lxr->line))
+		return -1;
+	lxr_consume(lxr);
+	++n_normal;
+	return 0;
+}
+
 static int model_process_unknown(struct lxr *lxr)
 {
 	printf("%s\n", __func__);
@@ -221,9 +243,9 @@ static int model_process_obj(FILE *f)
 			ret = model_process_v(&lxr);
 		else if (strcmp(lxr.str, "vt") == 0)
 			ret = model_process_vt(&lxr);
-#if 0
 		else if (strcmp(lxr.str, "vn") == 0)
 			ret = model_process_vn(&lxr);
+#if 0
 		else if (strcmp(lxr.str, "f") == 0)
 			ret = model_process_face(&lxr);
 #endif
