@@ -219,11 +219,10 @@ static int model_process_vn(struct lxr *lxr)
 
 static int model_process_unknown(struct lxr *lxr)
 {
-	printf("%s\n", __func__);
+	printf("(%d): %s(%s)\n", lxr->line, __func__, lxr->str);
 	lxr_consume(lxr);
 	while (!lxr_eol(lxr))
 		lxr_consume(lxr);
-	printf("%s finish\n", __func__);
 	lxr_consume(lxr);
 	return 0;
 }
