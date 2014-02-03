@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #define VMAX 1024
-#define HSIZE (1 << 16)
+#define HSIZE (1 << 10)
 
 struct ivertex {
 	int position;
@@ -22,10 +22,36 @@ static int n_texture;
 static float normal[VMAX][3];
 static int n_normal;
 
-/*
-static struct ivertex *hash[HSIZE];
 static struct ivertex ivertex[VMAX];
-*/
+static int n_ivertex;
+static struct ivertex *ivhash[HSIZE];
+
+static unsigned ivertex_hash(struct ivertex *iv)
+{
+	return iv->normal + iv->texture * 1759 + iv->position * 43517;
+}
+
+static struct ivertex *ivertex_find(struct ivertex *ref)
+{
+	unsigned idx = ivertex_hash(ref) & (HSIZE - 1);
+	struct ivertex *iv;
+	for (iv = ivhash[idx]; iv; iv = iv->next) {
+		if (iv->position != ref->position)
+			continue;
+		if (iv->texture != ref->texture)
+			continue;
+		if (iv->normal != ref->normal)
+			continue;
+		return iv;
+	}
+	if (ERR_ON(n_ivertex >= VMAX, "too many ivertetices\n"))
+		return NULL;
+	iv = &ivertex[n_ivertex++];
+	*iv = *ref;
+	iv->next = ivhash[idx];
+	ivhash[idx] = iv;
+	return iv;
+}
 
 enum token {
 	TOK_EOF,
@@ -227,6 +253,93 @@ static int model_process_unknown(struct lxr *lxr)
 	return 0;
 }
 
+static int model_process_ivertex(struct lxr *lxr, struct ivertex *iv)
+{
+	memset(iv, 0, sizeof(*iv));
+	/* TODO: add checking if integer is used */
+	if (lxr->next != TOK_NUMBER)
+		return -1;
+	iv->position = (int)lxr->val;
+	if (iv->position < 0)
+		iv->position = n_position - iv->position + 1;
+	if (ERR_ON(iv->position <= 0, "(%d): invalid position\n", lxr->line))
+		return -1;
+	if (lxr->next != TOK_SLASH)
+		return 0;
+	lxr_consume(lxr);
+	if (lxr->next == TOK_NUMBER) {
+		iv->texture = lxr->val;
+		if (iv->texture < 0)
+			iv->texture = n_texture - iv->texture + 1;
+		if (iv->texture < 0) {
+			ERR("(%d): invalid texture\n", lxr->line);
+			return -1;
+		}
+		lxr_consume(lxr);
+	}
+	if (lxr->next != TOK_SLASH)
+		return 0;
+	if (lxr->next != TOK_NUMBER) {
+		ERR("(%d): invalid vertex format\n", lxr->line);
+		return -1;
+	}
+	iv->normal = lxr->val;
+	if (iv->normal < 0)
+		iv->normal = n_normal - iv->normal + 1;
+	if (iv->normal < 0) {
+		ERR("(%d): invalid normal\n", lxr->line);
+		return -1;
+	}
+	lxr_consume(lxr);
+	return 0;
+}
+
+static bool ivertex_ok(struct ivertex *iv, struct ivertex *ref)
+{
+	if (iv->position && !ref->position)
+		return false;
+	if (!iv->position && ref->position)
+		return false;
+	if (iv->texture && !ref->texture)
+		return false;
+	if (!iv->texture && ref->texture)
+		return false;
+	if (iv->normal && !ref->normal)
+		return false;
+	if (!iv->normal && ref->normal)
+		return false;
+	return true;
+}
+
+static int model_process_face(struct lxr *lxr)
+{
+	printf("%s\n", __func__);
+	lxr_consume(lxr);
+	int count;
+	struct ivertex *ref = NULL;
+	for (count = 0; !lxr_eol(lxr); ++count) {
+		struct ivertex iv;
+		int ret = model_process_ivertex(lxr, &iv);
+		if (ret) {
+			ERR("(%d): f: at ivertex %d\n", lxr->line, count + 1);
+			return -1;
+		}
+		if (ref && !ivertex_ok(&iv, ref)) {
+			ERR("(%d): f: inconsistent ivertex format\n", lxr->line);
+			return -1;
+		}
+		struct ivertex *ptr;
+		ptr = ivertex_find(&iv);
+		if (ERR_ON(!ptr, "ivertex_find failed\n"))
+			return -1;
+		ref = ptr;
+		/* TODO: add vertex to elements */
+	}
+	/* process new-line */
+	lxr_consume(lxr);
+	return 0;
+}
+
 static int model_process_obj(FILE *f)
 {
 	struct lxr lxr = { .line = 1, .f = f };
@@ -244,10 +357,8 @@ static int model_process_obj(FILE *f)
 			ret = model_process_vt(&lxr);
 		else if (strcmp(lxr.str, "vn") == 0)
 			ret = model_process_vn(&lxr);
-#if 0
 		else if (strcmp(lxr.str, "f") == 0)
 			ret = model_process_face(&lxr);
-#endif
 		else
 			ret = model_process_unknown(&lxr);
 	}
