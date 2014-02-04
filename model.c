@@ -87,6 +87,8 @@ static int skip_ws(struct lxr *lxr)
 		int c = fgetc(lxr->f);
 		if (c == EOF)
 			return 0;
+		if (c == '\r')
+			continue;
 		if (st == ST_NONE) {
 			if (c == '#') {
 				st = ST_COMMENT;
