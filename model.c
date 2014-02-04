@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #define VMAX 1024
+#define EMAX (4 * VMAX)
 #define HSIZE (1 << 10)
 
 struct ivertex {
@@ -25,6 +26,9 @@ static int n_normal;
 static struct ivertex ivertex[VMAX];
 static int n_ivertex;
 static struct ivertex *ivhash[HSIZE];
+
+static int element[EMAX];
+static int n_element;
 
 static unsigned ivertex_hash(struct ivertex *iv)
 {
@@ -318,7 +322,7 @@ static int model_process_face(struct lxr *lxr)
 	printf("%s\n", __func__);
 	lxr_consume(lxr);
 	int count;
-	struct ivertex *ref = NULL;
+	struct ivertex *first = NULL, *prev = NULL;
 	for (count = 0; !lxr_eol(lxr); ++count) {
 		struct ivertex iv;
 		int ret = model_process_ivertex(lxr, &iv);
@@ -326,18 +330,35 @@ static int model_process_face(struct lxr *lxr)
 			ERR("(%d): f: at ivertex %d\n", lxr->line, count + 1);
 			return -1;
 		}
-		if (ref && !ivertex_ok(&iv, ref)) {
+		if (first && !ivertex_ok(&iv, first)) {
 			ERR("(%d): f: inconsistent ivertex format\n", lxr->line);
 			return -1;
 		}
-		struct ivertex *ptr;
-		ptr = ivertex_find(&iv);
-		if (ERR_ON(!ptr, "ivertex_find failed\n"))
+		struct ivertex *curr;
+		curr = ivertex_find(&iv);
+		if (ERR_ON(!curr, "ivertex_find failed\n"))
 			return -1;
-		printf("ivertex = %ld\n", ptr - ivertex);
-		ref = ptr;
-		/* TODO: add vertex to elements */
+		printf("ivertex = %ld\n", curr - ivertex);
+		/* add triangle */
+		if (count >= 2) {
+			if (n_element >= EMAX - 3) {
+				ERR("too many triangle points\n");
+				return -1;
+			}
+			element[n_element++] = first - ivertex;
+			element[n_element++] = prev - ivertex;
+			element[n_element++] = curr - ivertex;
+			printf("triangle %d %d %d\n",
+				element[n_element - 1],
+				element[n_element - 2],
+				element[n_element - 3]);
+		}
+		prev = curr;
+		if (!first)
+			first = prev;
 	}
+	if (ERR_ON(count < 3, "(%d): f: less then 3 ivertices\n"))
+		return -1;
 	/* process new-line */
 	lxr_consume(lxr);
 	return 0;
