@@ -9,7 +9,7 @@ struct vertex {
 
 struct model {
 	int n_element;
-	int *element;
+	unsigned int *element;
 	int n_vertex;
 	struct vertex vertex[];
 };

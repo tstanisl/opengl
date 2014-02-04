@@ -6,7 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define VMAX 1024
+#define VMAX 4096
 #define EMAX (4 * VMAX)
 #define HSIZE (1 << 10)
 
@@ -28,7 +28,7 @@ static struct ivertex ivertex[VMAX];
 static int n_ivertex;
 static struct ivertex *ivhash[HSIZE];
 
-static int element[EMAX];
+static unsigned int element[EMAX];
 static int n_element;
 
 static unsigned ivertex_hash(struct ivertex *iv)
