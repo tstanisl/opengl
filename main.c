@@ -226,9 +226,14 @@ void loop(struct context *ctx)
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
 
-	struct model *m = model_load("models/cube.obj");
-	if (ERR_ON(!m, "model_load(\"models/cube.obj\") failed\n"))
+	char *path = "models/suzanne.obj";
+	struct model *m = model_load(path);
+	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
 		return;
+
+	printf("m->element = %d\n", m->n_element);
+	for (int i = 0; i < m->n_element; i += 3)
+		printf("%d %d %d\n", m->element[i], m->element[i + 1], m->element[i + 2]);
 
 	GLuint vb;
 	glGenBuffers(1, &vb);
@@ -239,6 +244,12 @@ void loop(struct context *ctx)
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
 		(void*)offsetof(struct vertex, position));
+
+	GLuint eb;
+	glGenBuffers(1, &eb);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eb);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, m->n_element * sizeof(m->element[0]),
+		m->element, GL_STATIC_DRAW);
 
 	mat4 P;
 	mat4_perspective(P, 1, 30.0, M_PI / 4, 640.f / 480.0f);
@@ -268,7 +279,9 @@ void loop(struct context *ctx)
 
 		// drawing
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
-		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eb);
+		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
 		mat4_identity(MVP);
 		mat4_scale(MVP, 0.5, 0.5, 0.5);
@@ -279,7 +292,9 @@ void loop(struct context *ctx)
 
 		// drawing
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
-		glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+		//glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eb);
+		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
 		SDL_GL_SwapWindow(ctx->win);
 		angle += 0.01f;
