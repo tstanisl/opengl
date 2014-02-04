@@ -226,52 +226,19 @@ void loop(struct context *ctx)
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
 
-	GLfloat vert[] = {
-		-1.0f,-1.0f,-1.0f, // triangle 1 : begin
-		-1.0f,-1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f, // triangle 1 : end
-		1.0f, 1.0f,-1.0f, // triangle 2 : begin
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f, // triangle 2 : end
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		-1.0f,-1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		-1.0f,-1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f,-1.0f,
-		1.0f,-1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f,-1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f,-1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f, 1.0f, 1.0f,
-		-1.0f, 1.0f, 1.0f,
-		1.0f,-1.0f, 1.0f,
-	};
+	struct model *m = model_load("models/cube.obj");
+	if (ERR_ON(!m, "model_load(\"models/cube.obj\") failed\n"))
+		return;
 
 	GLuint vb;
 	glGenBuffers(1, &vb);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vert), vert, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(m->vertex[0]) * m->n_vertex, m->vertex,
+		GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0L);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
+		(void*)offsetof(struct vertex, position));
 
 	mat4 P;
 	mat4_perspective(P, 1, 30.0, M_PI / 4, 640.f / 480.0f);
@@ -335,8 +302,6 @@ int main()
 	loop(&ctx);
 
 	win_destroy(&ctx);
-
-	model_load("models/cube.obj");
 
 	return 0;
 }
