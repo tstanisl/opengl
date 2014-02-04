@@ -231,9 +231,11 @@ void loop(struct context *ctx)
 	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
 		return;
 
+#if 0
 	printf("m->element = %d\n", m->n_element);
 	for (int i = 0; i < m->n_element; i += 3)
 		printf("%d %d %d\n", m->element[i], m->element[i + 1], m->element[i + 2]);
+#endif
 
 	GLuint vb;
 	glGenBuffers(1, &vb);

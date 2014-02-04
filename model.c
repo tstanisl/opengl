@@ -160,7 +160,7 @@ static enum token lxr_get_next(struct lxr *lxr)
 void lxr_consume(struct lxr *lxr)
 {
 	lxr->next = lxr_get_next(lxr);
-#if 1
+#if 0
 	enum token t = lxr->next;
 	if (t == TOK_ERROR) {
 		printf("%3d: error: %s\n", lxr->line, lxr->str);
@@ -185,7 +185,7 @@ static bool lxr_eol(struct lxr *lxr)
 
 static int model_process_v(struct lxr *lxr)
 {
-	printf("%s\n", __func__);
+	//printf("%s\n", __func__);
 	lxr_consume(lxr);
 	if (ERR_ON(n_position >= VMAX, "too many vertices\n"))
 		return -1;
@@ -210,7 +210,7 @@ static int model_process_v(struct lxr *lxr)
 
 static int model_process_vt(struct lxr *lxr)
 {
-	printf("%s\n", __func__);
+	//printf("%s\n", __func__);
 	lxr_consume(lxr);
 	if (ERR_ON(n_texture >= VMAX, "too many texture points\n"))
 		return -1;
@@ -239,7 +239,7 @@ static int model_process_vt(struct lxr *lxr)
 
 static int model_process_vn(struct lxr *lxr)
 {
-	printf("%s\n", __func__);
+	//printf("%s\n", __func__);
 	lxr_consume(lxr);
 	if (ERR_ON(n_normal >= VMAX, "too many normals\n"))
 		return -1;
@@ -261,7 +261,7 @@ static int model_process_vn(struct lxr *lxr)
 
 static int model_process_unknown(struct lxr *lxr)
 {
-	printf("(%d): %s(%s)\n", lxr->line, __func__, lxr->str);
+	//printf("(%d): %s(%s)\n", lxr->line, __func__, lxr->str);
 	lxr_consume(lxr);
 	while (!lxr_eol(lxr))
 		lxr_consume(lxr);
@@ -331,7 +331,7 @@ static bool ivertex_ok(struct ivertex *iv, struct ivertex *ref)
 
 static int model_process_face(struct lxr *lxr)
 {
-	printf("%s\n", __func__);
+	//printf("%s\n", __func__);
 	lxr_consume(lxr);
 	int count;
 	struct ivertex *first = NULL, *prev = NULL;
@@ -350,7 +350,7 @@ static int model_process_face(struct lxr *lxr)
 		curr = ivertex_find(&iv);
 		if (ERR_ON(!curr, "ivertex_find failed\n"))
 			return -1;
-		printf("ivertex = %ld\n", curr - ivertex);
+		//printf("ivertex = %ld\n", curr - ivertex);
 		/* add triangle */
 		if (count >= 2) {
 			if (n_element >= EMAX - 3) {
@@ -360,10 +360,10 @@ static int model_process_face(struct lxr *lxr)
 			element[n_element++] = first - ivertex;
 			element[n_element++] = prev - ivertex;
 			element[n_element++] = curr - ivertex;
-			printf("triangle %d %d %d\n",
+			/*printf("triangle %d %d %d\n",
 				element[n_element - 1],
 				element[n_element - 2],
-				element[n_element - 3]);
+				element[n_element - 3]);*/
 		}
 		prev = curr;
 		if (!first)
