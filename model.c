@@ -352,6 +352,10 @@ static int model_process_obj(FILE *f)
 		enum token t = lxr.next;
 		if (t == TOK_EOF)
 			return 0;
+		if (t == TOK_EOL) {
+			lxr_consume(&lxr);
+			continue;
+		}
 		if (ERR_ON(t != TOK_STRING, "(%d) syntax error\n", lxr.line))
 			return -1;
 		if (strcmp(lxr.str, "v") == 0)
