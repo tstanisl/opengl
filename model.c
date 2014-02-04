@@ -4,6 +4,7 @@
 #include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #define VMAX 1024
 #define EMAX (4 * VMAX)
@@ -33,6 +34,15 @@ static int n_element;
 static unsigned ivertex_hash(struct ivertex *iv)
 {
 	return iv->normal + iv->texture * 1759 + iv->position * 43517;
+}
+
+static void ivertex_reset(void)
+{
+	for (int i = 0; i < n_ivertex; ++i) {
+		unsigned idx = ivertex_hash(&ivertex[i]) & (HSIZE - 1);
+		ivhash[idx] = NULL;
+	}
+	n_ivertex = 0;
 }
 
 static struct ivertex *ivertex_find(struct ivertex *ref)
@@ -368,6 +378,8 @@ static int model_process_face(struct lxr *lxr)
 
 static int model_process_obj(FILE *f)
 {
+	ivertex_reset();
+	n_position = n_texture = n_normal = n_element = 0;
 	struct lxr lxr = { .line = 1, .f = f };
 	lxr_consume(&lxr);
 	int ret = 0;
@@ -402,13 +414,47 @@ struct model *model_load(char *path)
 		return NULL;
 
 	int ret = model_process_obj(f);
+	fclose(f);
 	if (ERR_ON(ret, "failed to process '%s'\n", path))
-		goto fail_f;
+		return NULL;
 
-	fclose(f);
-	return NULL;
-fail_f:
-	fclose(f);
-	return NULL;
+	struct model *m;
+	size_t size = sizeof(*m) + n_ivertex * sizeof(m->vertex[0]);
+	m = malloc(size);
+	if (ERR_ON(!m, "malloc(%lu) failed\n", (unsigned long)size))
+		return NULL;
+
+	size = n_element * sizeof(m->element[0]);
+	m->element = malloc(size);
+	if (ERR_ON(!m, "malloc(%lu) failed\n", (unsigned long)size)) {
+		free(m);
+		return NULL;
+	}
+
+	memcpy(m->element, element, size);
+	for (int i = 0; i < n_ivertex; ++i) {
+		struct ivertex *iv = &ivertex[i];
+		struct vertex *v = &m->vertex[i];
+		v->position[0] = position[iv->position - 1][0];
+		v->position[1] = position[iv->position - 1][1];
+		v->position[2] = position[iv->position - 1][2];
+		if (iv->texture) {
+			v->texture[0] = texture[iv->texture - 1][0];
+			v->texture[1] = texture[iv->texture - 1][1];
+		} else {
+			v->texture[0] = v->texture[1] = 0.0f;
+		}
+		if (iv->normal) {
+			v->normal[0] = normal[iv->normal - 1][0];
+			v->normal[1] = normal[iv->normal - 1][1];
+			v->normal[2] = normal[iv->normal - 1][2];
+		} else {
+			v->normal[0] = v->normal[1] = v->normal[2] = 0.0f;
+		}
+	}
+	m->n_vertex = n_ivertex;
+	m->n_element = n_element;
+
+	return m;
 }
 
