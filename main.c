@@ -247,20 +247,18 @@ void loop(struct context *ctx)
 	int aId;
 
 	aId = glGetAttribLocation(progId, "position");
-	printf("aId = %d\n", aId);
 	if (ERR_ON(aId < 0, "pos is not a valid attribute\n"))
 		return;
 	glEnableVertexAttribArray(aId);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
+	glVertexAttribPointer(aId, 3, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
 		(void*)offsetof(struct vertex, position));
 	//glDisableVertexAttribArray(aId);
 
-	/*aId = glGetAttribLocation(progId, "normal2");
-	printf("aId = %d\n", aId);
+	aId = glGetAttribLocation(progId, "normal");
 	if (ERR_ON(aId < 0, "normal is not a valid attribute\n"))
-		return;*/
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(struct vertex),
+		return;
+	glEnableVertexAttribArray(aId);
+	glVertexAttribPointer(aId, 3, GL_FLOAT, GL_TRUE, sizeof(struct vertex),
 		(void*)offsetof(struct vertex, normal));
 	//glDisableVertexAttribArray(aId);
 
