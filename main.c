@@ -228,6 +228,7 @@ void loop(struct context *ctx)
 		return;
 
 	char *path = "models/suzanne.obj";
+	//char *path = "models/chaise.obj";
 	struct model *m = model_load(path);
 	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
 		return;
