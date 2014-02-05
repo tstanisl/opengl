@@ -288,23 +288,7 @@ void loop(struct context *ctx)
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		mat4_identity(MVP);
-		mat4_scale(MVP, 0.5, 0.5, 0.5);
-		mat4_rotate_z(MVP, -angle);
-		mat4_translate(MVP, 0.0, 0.0, -1.5);
-		mat4_rotate_y(MVP, angle);
-		mat4_mul(MVP, VP);
-
-		// drawing
-		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
-		//glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eb);
-		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
-
-		mat4_identity(MVP);
-		mat4_scale(MVP, 0.5, 0.5, 0.5);
 		mat4_rotate_z(MVP, angle);
-		mat4_translate(MVP, 0.0, 0.0, 1.5);
-		mat4_rotate_y(MVP, angle);
 		mat4_mul(MVP, VP);
 
 		// drawing
