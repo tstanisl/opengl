@@ -88,6 +88,7 @@ int shader_create(char *path, GLenum type)
 	if (ERR_ON(ret < 0, "read() failed\n"))
 		goto fail_buf;
 	size = ret;
+	buf[size] = 0;
 
 	GLuint id = glCreateShader(type);
 	if (ERR_ON(!id, "glCreateShader() failed\n"))
