@@ -239,8 +239,16 @@ void loop(struct context *ctx)
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
 
+	GLint mvId = glGetUniformLocation(progId, "MV");
+	if (ERR_ON(mvpId < 0, "failed to bind uniform MV\n"))
+		return;
+
 	GLint mId = glGetUniformLocation(progId, "M");
 	if (ERR_ON(mvpId < 0, "failed to bind uniform M\n"))
+		return;
+
+	GLint cposId = glGetUniformLocation(progId, "camera_pos");
+	if (ERR_ON(mvpId < 0, "failed to bind uniform camera_pos\n"))
 		return;
 
 	GLuint vb;
@@ -281,20 +289,23 @@ void loop(struct context *ctx)
 
 	float angle = 0.0f;
 	struct camera cam = { .z = 6.5 };
-	mat4 VP, MVP;
+	mat4 V, MVP;
 
 	while (process_event(&cam)) {
-		mat4_identity(VP);
-		mat4_translate(VP, -cam.x, -cam.y, -cam.z);
-		mat4_rotate_y(VP, cam.theta);
-		mat4_rotate_x(VP, cam.azimuth);
-		mat4_mul(VP, P);
+		mat4_identity(V);
+		mat4_translate(V, -cam.x, -cam.y, -cam.z);
+		mat4_rotate_y(V, cam.theta);
+		mat4_rotate_x(V, cam.azimuth);
 
 		mat4_identity(MVP);
 		mat4_rotate_z(MVP, angle);
 		glUniformMatrix4fv(mId, 1, GL_TRUE, (void*)MVP);
-		mat4_mul(MVP, VP);
+		mat4_mul(MVP, V);
+		glUniformMatrix4fv(mvId, 1, GL_TRUE, (void*)MVP);
+		mat4_mul(MVP, P);
 		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
+		glUniform3f(cposId, cam.x, cam.y, cam.z);
+		
 
 		// drawing
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
