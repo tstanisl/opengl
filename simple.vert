@@ -1,19 +1,19 @@
 #version 130
 
 //layout (location = 0) in vec3 pos;
-in vec3 position;
-in vec2 texcoord;
-in vec3 normal;
+in vec3 vpos;
+in vec2 vtex;
+in vec3 vnorm;
 
 uniform mat4 MVP;
-out vec3 color;
+uniform mat4 M;
+
+out vec3 fnorm;
+out vec2 ftex;
 
 void main()
 {
-	vec4 mvp_normal = MVP * vec4(normal, 0.0);
-	color = position * 0.5 + 0.5;
-	color = color * clamp(mvp_normal.y, 0.0, 1);
-	color += 0.05;
-	vec4 v = vec4(position, 1.0);
-	gl_Position = MVP * v;
+	ftex = vtex;
+	fnorm = (M * vec4(vnorm, 0.0)).xyz;
+	gl_Position = MVP * vec4(vpos, 1.0);
 }

@@ -213,6 +213,18 @@ static int process_event(struct camera *c)
 
 void loop(struct context *ctx)
 {
+	char *path = "models/suzanne.obj";
+	//char *path = "models/chaise.obj";
+	struct model *m = model_load(path);
+	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
+		return;
+
+#if 0
+	printf("m->element = %d\n", m->n_element);
+	for (int i = 0; i < m->n_element; i += 3)
+		printf("%d %d %d\n", m->element[i], m->element[i + 1], m->element[i + 2]);
+#endif
+
 	int progId = program_create_by_path("simple.vert", "simple.frag");
 	if (ERR_ON(progId < 0, "program_create_by_path() failed\n"))
 		return;
@@ -227,17 +239,9 @@ void loop(struct context *ctx)
 	if (ERR_ON(mvpId < 0, "failed to bind uniform MVP\n"))
 		return;
 
-	char *path = "models/suzanne.obj";
-	//char *path = "models/chaise.obj";
-	struct model *m = model_load(path);
-	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
+	GLint mId = glGetUniformLocation(progId, "M");
+	if (ERR_ON(mvpId < 0, "failed to bind uniform M\n"))
 		return;
-
-#if 0
-	printf("m->element = %d\n", m->n_element);
-	for (int i = 0; i < m->n_element; i += 3)
-		printf("%d %d %d\n", m->element[i], m->element[i + 1], m->element[i + 2]);
-#endif
 
 	GLuint vb;
 	glGenBuffers(1, &vb);
@@ -247,7 +251,7 @@ void loop(struct context *ctx)
 
 	int aId;
 
-	aId = glGetAttribLocation(progId, "position");
+	aId = glGetAttribLocation(progId, "vpos");
 	if (ERR_ON(aId < 0, "pos is not a valid attribute\n"))
 		return;
 	glEnableVertexAttribArray(aId);
@@ -255,7 +259,7 @@ void loop(struct context *ctx)
 		(void*)offsetof(struct vertex, position));
 	//glDisableVertexAttribArray(aId);
 
-	aId = glGetAttribLocation(progId, "normal");
+	aId = glGetAttribLocation(progId, "vnorm");
 	if (ERR_ON(aId < 0, "normal is not a valid attribute\n"))
 		return;
 	glEnableVertexAttribArray(aId);
@@ -277,24 +281,25 @@ void loop(struct context *ctx)
 
 	float angle = 0.0f;
 	struct camera cam = { .z = 6.5 };
+	mat4 VP, MVP;
+
 	while (process_event(&cam)) {
-		mat4 VP, MVP;
 		mat4_identity(VP);
 		mat4_translate(VP, -cam.x, -cam.y, -cam.z);
 		mat4_rotate_y(VP, cam.theta);
 		mat4_rotate_x(VP, cam.azimuth);
 		mat4_mul(VP, P);
 
+		mat4_identity(MVP);
+		mat4_rotate_z(MVP, angle);
+		glUniformMatrix4fv(mId, 1, GL_TRUE, (void*)MVP);
+		mat4_mul(MVP, VP);
+		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
+
+		// drawing
 		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		mat4_identity(MVP);
-		mat4_rotate_z(MVP, angle);
-		mat4_mul(MVP, VP);
-
-		// drawing
-		glUniformMatrix4fv(mvpId, 1, GL_TRUE, (void*)MVP);
-		//glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, eb);
 		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
