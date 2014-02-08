@@ -6,9 +6,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define VMAX 4096
+#define VMAX (1 << 20)
 #define EMAX (4 * VMAX)
-#define HSIZE (1 << 10)
+#define HSIZE (1 << 20)
 
 struct ivertex {
 	int position;
