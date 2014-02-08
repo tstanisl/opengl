@@ -173,7 +173,7 @@ struct camera {
 
 static int process_event(struct camera *c)
 {
-	const float speed = 0.1;
+	const float speed = 0.02;
 	SDL_Event ev;
 	while (SDL_PollEvent(&ev)) {
 		if (ev.type == SDL_WINDOWEVENT) {
@@ -213,7 +213,10 @@ static int process_event(struct camera *c)
 
 void loop(struct context *ctx)
 {
+	//char *path = "models/ship.obj";
+	//char *path = "models/sponza.obj";
 	char *path = "models/suzanne.obj";
+	//char *path = "models/buddha.obj";
 	//char *path = "models/chaise.obj";
 	struct model *m = model_load(path);
 	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
@@ -282,13 +285,13 @@ void loop(struct context *ctx)
 		m->element, GL_STATIC_DRAW);
 
 	mat4 P;
-	mat4_perspective(P, 1, 30.0, M_PI / 4, 640.f / 480.0f);
+	mat4_perspective(P, 0.1, 5.0, M_PI / 4, 640.f / 480.0f);
 
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
 	float angle = 0.0f;
-	struct camera cam = { .z = 6.5 };
+	struct camera cam = { .z = 4.0 };
 	mat4 V, MVP;
 
 	while (process_event(&cam)) {
@@ -315,7 +318,7 @@ void loop(struct context *ctx)
 		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
 		SDL_GL_SwapWindow(ctx->win);
-		angle += 0.01f;
+		angle += 0.002f;
 		SDL_Delay(20);
 	}
 
