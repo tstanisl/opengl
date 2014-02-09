@@ -338,6 +338,11 @@ void loop(struct context *ctx)
 	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
 		return;
 
+	model_compute_normals(m);
+	/*float *vtan = model_compute_tangents(m);
+	if (ERR_ON(!vtan, "failed to computa tangents\n"))
+		return;*/
+
 #if 0
 	printf("m->element = %d\n", m->n_element);
 	for (int i = 0; i < m->n_element; i += 3)
@@ -432,9 +437,9 @@ void loop(struct context *ctx)
 
 	/*glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);*/
-	glFrontFace(GL_CCW);
+	/*glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);*/
 
 	float angle = 0.0f;
 	struct camera cam = { .z = 4.0 };
