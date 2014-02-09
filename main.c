@@ -6,6 +6,7 @@
 
 #include <SDL.h>
 #include <SDL_opengl.h>
+#include <SDL_image.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -29,9 +30,14 @@ int win_create(struct context *ctx)
 	if (SDLERR_ON(ret < 0))
 		return -1;
 
+	int flags = IMG_INIT_JPG | IMG_INIT_PNG;
+	ret = IMG_Init(flags);
+	if (ERR_ON((ret & flags) != flags, "IMG_Init() failed\n"))
+		goto fail_sdl;
+
 	ret = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
 	if (SDLERR_ON(ret < 0))
-		goto fail_sdl;
+		goto fail_img;
 
 	ret = SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	if (SDLERR_ON(ret < 0))
@@ -54,6 +60,8 @@ int win_create(struct context *ctx)
 
 fail_win:
 	SDL_DestroyWindow(ctx->win);
+fail_img:
+	IMG_Quit();
 fail_sdl:
 	SDL_Quit();
 
