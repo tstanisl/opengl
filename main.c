@@ -210,6 +210,10 @@ static int process_event(struct camera *c)
 				c->x -= speed * cosf(c->theta);
 				c->z -= speed * sinf(c->theta);
 			}
+			if (k == SDLK_e)
+				c->y += speed;
+			if (k == SDLK_x)
+				c->y -= speed;
 		} else if (ev.type == SDL_MOUSEMOTION) {
 			SDL_Window* win = SDL_GetWindowFromID(ev.motion.windowID);
 			int width, height;
