@@ -314,7 +314,7 @@ int texture_load(char *path)
 
 	SDL_FreeSurface(s);
 
-	return 0;
+	return texId;
 
 fail_texture:
 	glDeleteTextures(1, &texId);
@@ -344,6 +344,8 @@ void loop(struct context *ctx)
 		return;
 
 	int texId = texture_load("textures/suzanne.bmp");
+	if (ERR_ON(texId < 0, "failed to load texture\n"))
+		return;
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -367,6 +369,19 @@ void loop(struct context *ctx)
 	if (ERR_ON(mvpId < 0, "failed to bind uniform camera_pos\n"))
 		return;
 
+	GLint texLoc = glGetUniformLocation(progId, "tex0");
+	if (ERR_ON(texLoc < 0, "failed to bind tex0\n"))
+		return;
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texId);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
+	glUniform1i(texLoc, 0);
+
 	GLuint vb;
 	glGenBuffers(1, &vb);
 	glBindBuffer(GL_ARRAY_BUFFER, vb);
@@ -389,6 +404,13 @@ void loop(struct context *ctx)
 	glEnableVertexAttribArray(aId);
 	glVertexAttribPointer(aId, 3, GL_FLOAT, GL_TRUE, sizeof(struct vertex),
 		(void*)offsetof(struct vertex, normal));
+
+	aId = glGetAttribLocation(progId, "vtex");
+	if (ERR_ON(aId < 0, "vtex is not a valid attribute\n"))
+		return;
+	glEnableVertexAttribArray(aId);
+	glVertexAttribPointer(aId, 2, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
+		(void*)offsetof(struct vertex, texture));
 	//glDisableVertexAttribArray(aId);
 
 	GLuint eb;
