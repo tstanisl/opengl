@@ -219,6 +219,54 @@ static int process_event(struct camera *c)
 	return 1;
 }
 
+static int texture_to_gl(SDL_Surface *s, GLenum *fmt, GLenum *type)
+{
+	switch (s->format->format) {
+	case SDL_PIXELFORMAT_BGR565:
+		*fmt = GL_BGR; *type = GL_UNSIGNED_SHORT_5_6_5; break;
+	default:
+		ERR("SDL format %08x cannot be converted to OpenGL\n",
+			s->format->format);
+		return -1;
+	}
+	return 0;
+}
+  
+int texture_load(char *path)
+{
+	SDL_Surface *s = IMG_Load(path);
+	if (ERR_ON(!s, "IMG_Load(\"%s\") failed: %s\n", path, IMG_GetError()))
+		return -1;
+
+	GLenum fmt, type;
+	int ret = texture_to_gl(s, &fmt, &type);
+	if (ERR_ON(ret < 0, "format of \"%s\" is not supported by opengl\n", path))
+		goto fail_surface;
+
+	GLuint texId;
+	glGenTextures(1, &texId);
+	glBindTexture(GL_TEXTURE_2D, texId);
+
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, s->w, s->h,
+		0, fmt, type, s->pixels);
+	GLenum err = glGetError();
+
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	if (ERR_ON(err != GL_NO_ERROR, "glTexImage2D() failed\n"))
+		goto fail_texture;
+
+	SDL_FreeSurface(s);
+
+	return 0;
+
+fail_texture:
+	glDeleteTextures(1, &texId);
+fail_surface:
+	SDL_FreeSurface(s);
+	return -1;
+}
+
 void loop(struct context *ctx)
 {
 	//char *path = "models/ship.obj";
@@ -235,10 +283,11 @@ void loop(struct context *ctx)
 	for (int i = 0; i < m->n_element; i += 3)
 		printf("%d %d %d\n", m->element[i], m->element[i + 1], m->element[i + 2]);
 #endif
-
 	int progId = program_create_by_path("simple.vert", "simple.frag");
 	if (ERR_ON(progId < 0, "program_create_by_path() failed\n"))
 		return;
+
+	int texId = texture_load("textures/suzanne.bmp");
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
