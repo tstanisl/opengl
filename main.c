@@ -19,6 +19,8 @@
 #define SDLERR_ON(cond) \
 	ERR_ON(cond, "%s\n", SDL_GetError())
 
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+
 struct context {
 	SDL_Window *win;
 	SDL_Renderer *render;
