@@ -221,19 +221,73 @@ static int process_event(struct camera *c)
 	return 1;
 }
 
+
+static char *sdl_format_name(unsigned int id)
+{
+	static struct {
+		unsigned int id;
+		char *name;
+	} sdl_format[] = {
+#define SDLTEX(type) { .id = SDL_PIXELFORMAT_ ## type, .name = #type }
+		SDLTEX(UNKNOWN),
+		SDLTEX(INDEX1LSB),
+		SDLTEX(INDEX1MSB),
+		SDLTEX(INDEX4LSB),
+		SDLTEX(INDEX4MSB),
+		SDLTEX(INDEX8),
+		SDLTEX(RGB332),
+		SDLTEX(RGB444),
+		SDLTEX(RGB555),
+		SDLTEX(BGR555),
+		SDLTEX(ARGB4444),
+		SDLTEX(RGBA4444),
+		SDLTEX(ABGR4444),
+		SDLTEX(BGRA4444),
+		SDLTEX(ARGB1555),
+		SDLTEX(RGBA5551),
+		SDLTEX(ABGR1555),
+		SDLTEX(BGRA5551),
+		SDLTEX(RGB565),
+		SDLTEX(BGR565),
+		SDLTEX(RGB24),
+		SDLTEX(BGR24),
+		SDLTEX(RGB888),
+		SDLTEX(RGBX8888),
+		SDLTEX(BGR888),
+		SDLTEX(BGRX8888),
+		SDLTEX(ARGB8888),
+		SDLTEX(RGBA8888),
+		SDLTEX(ABGR8888),
+		SDLTEX(BGRA8888),
+		SDLTEX(ARGB2101010),
+		SDLTEX(YV12),
+		SDLTEX(IYUV),
+		SDLTEX(YUY2),
+		SDLTEX(UYVY),
+		SDLTEX(YVYU),
+#undef SDLTEX
+	};
+	for (int i = 0; i < ARRAY_SIZE(sdl_format); ++i)
+		if (sdl_format[i].id == id)
+			return sdl_format[i].name;
+	return "error";
+}
+
 static int texture_to_gl(SDL_Surface *s, GLenum *fmt, GLenum *type)
 {
 	switch (s->format->format) {
 	case SDL_PIXELFORMAT_BGR565:
 		*fmt = GL_BGR; *type = GL_UNSIGNED_SHORT_5_6_5; break;
+	case SDL_PIXELFORMAT_RGB565:
+		*fmt = GL_RGB; *type = GL_UNSIGNED_SHORT_5_6_5; break;
 	default:
-		ERR("SDL format %08x cannot be converted to OpenGL\n",
-			s->format->format);
+		ERR("SDL format %s cannot be converted to OpenGL\n",
+			sdl_format_name(s->format->format));
 		return -1;
 	}
 	return 0;
 }
-  
+ 
 int texture_load(char *path)
 {
 	SDL_Surface *s = IMG_Load(path);
