@@ -16,5 +16,6 @@ struct model {
 
 struct model *model_load(char *path);
 void model_put(struct model *m);
+void model_compute_normals(struct model *m);
 
 #endif /* MODEL_H */

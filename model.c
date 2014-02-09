@@ -2,6 +2,7 @@
 #include "debug.h"
 
 #include <ctype.h>
+#include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -458,3 +459,43 @@ struct model *model_load(char *path)
 	return m;
 }
 
+static inline void normalize(float v[3])
+{
+	float d = 1.0f / sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+	v[0] *= d; v[1] *= d; v[2] *= d;
+}
+
+static inline void cross(float d[3], float a[3], float b[3])
+{
+	d[0] = a[2]*b[1] - a[1]*b[2];
+	d[1] = a[0]*b[2] - a[2]*b[0];
+	d[2] = a[1]*b[0] - a[0]*b[1];
+}
+
+void model_compute_normals(struct model *m)
+{
+	for (int i = 0; i < m->n_element; ++i)
+		memset(&normal[m->element[i]], 0, sizeof(normal[i]));
+	for (int i = 0; i < m->n_element; i += 3) {
+		float *v0 = m->vertex[m->element[i + 0]].position;
+		float *v1 = m->vertex[m->element[i + 1]].position;
+		float *v2 = m->vertex[m->element[i + 2]].position;
+		float p[3] = {v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]}; 
+		normalize(p);
+		float q[3] = {v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]}; 
+		normalize(q);
+		float n[3];
+		cross(n, q, p);
+		for (int j = 0; j < 3; ++j) {
+			int idx = m->element[i + j];
+			normal[idx][0] += n[0];
+			normal[idx][1] += n[1];
+			normal[idx][2] += n[2];
+		}
+	}
+	for (int i = 0; i < m->n_element; ++i) {
+		normalize(normal[m->element[i]]);
+		memcpy(m->vertex[m->element[i]].normal, normal[m->element[i]],
+			sizeof(normal[0]));
+	}
+}
