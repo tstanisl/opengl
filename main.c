@@ -347,7 +347,7 @@ void loop(struct context *ctx)
 	if (ERR_ON(progId < 0, "program_create_by_path() failed\n"))
 		return;
 
-	int texId = texture_load("textures/suzanne.bmp");
+	int texId = texture_load("textures/marble.bmp");
 	if (ERR_ON(texId < 0, "failed to load texture\n"))
 		return;
 
@@ -379,8 +379,8 @@ void loop(struct context *ctx)
 
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texId);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -457,7 +457,7 @@ void loop(struct context *ctx)
 		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
 		SDL_GL_SwapWindow(ctx->win);
-		angle += 0.002f;
+		//angle += 0.002f;
 		SDL_Delay(20);
 	}
 

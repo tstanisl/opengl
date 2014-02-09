@@ -24,6 +24,6 @@ void main()
 
 	light = 0.1 + diffuse + pow(light, 16);
 
-	gl_FragColor.rgb = light * texture2D(tex0, ftex).rgb;
+	gl_FragColor.rgb = 0.05 + light * texture2D(tex0, ftex).rgb;
 	gl_FragColor.a = 1.0;
 }
