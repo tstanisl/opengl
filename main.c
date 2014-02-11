@@ -284,6 +284,8 @@ static int texture_to_gl(SDL_Surface *s, GLenum *fmt, GLenum *type)
 		*fmt = GL_BGR; *type = GL_UNSIGNED_SHORT_5_6_5; break;
 	case SDL_PIXELFORMAT_RGB565:
 		*fmt = GL_RGB; *type = GL_UNSIGNED_SHORT_5_6_5; break;
+	case SDL_PIXELFORMAT_RGB24:
+		*fmt = GL_RGB; *type = GL_UNSIGNED_BYTE; break;
 	default:
 		ERR("SDL format %s cannot be converted to OpenGL\n",
 			sdl_format_name(s->format->format));
@@ -332,13 +334,15 @@ void loop(struct context *ctx)
 	//char *path = "models/ship.obj";
 	//char *path = "models/sponza.obj";
 	char *path = "models/suzanne.obj";
+	//char *path = "models/cube.obj";
 	//char *path = "models/buddha.obj";
 	//char *path = "models/chaise.obj";
 	struct model *m = model_load(path);
 	if (ERR_ON(!m, "model_load(\"%s\") failed\n", path))
 		return;
 
-	model_compute_normals(m);
+	//model_compute_normals(m);
+	model_compute_tangents(m);
 	/*float *vtan = model_compute_tangents(m);
 	if (ERR_ON(!vtan, "failed to computa tangents\n"))
 		return;*/
@@ -354,6 +358,10 @@ void loop(struct context *ctx)
 
 	int texId = texture_load("textures/marble.bmp");
 	if (ERR_ON(texId < 0, "failed to load texture\n"))
+		return;
+
+	int normId = texture_load("textures/normal2.png");
+	if (ERR_ON(texId < 0, "failed to load normals map\n"))
 		return;
 
 	GLuint vao;
@@ -382,6 +390,10 @@ void loop(struct context *ctx)
 	if (ERR_ON(texLoc < 0, "failed to bind tex0\n"))
 		return;
 
+	GLint normLoc = glGetUniformLocation(progId, "normal0");
+	if (ERR_ON(texLoc < 0, "failed to bind normal0\n"))
+		return;
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, texId);
 	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -391,6 +403,16 @@ void loop(struct context *ctx)
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	glUniform1i(texLoc, 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, normId);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	glUniform1i(normLoc, 1);
 
 	GLuint vb;
 	glGenBuffers(1, &vb);
@@ -421,6 +443,13 @@ void loop(struct context *ctx)
 	glEnableVertexAttribArray(aId);
 	glVertexAttribPointer(aId, 2, GL_FLOAT, GL_FALSE, sizeof(struct vertex),
 		(void*)offsetof(struct vertex, texture));
+
+	aId = glGetAttribLocation(progId, "vtan");
+	if (ERR_ON(aId < 0, "vtan is not a valid attribute\n"))
+		return;
+	glEnableVertexAttribArray(aId);
+	glVertexAttribPointer(aId, 2, GL_FLOAT, GL_TRUE, sizeof(struct vertex),
+		(void*)offsetof(struct vertex, tangent));
 	//glDisableVertexAttribArray(aId);
 
 	GLuint eb;
@@ -469,7 +498,7 @@ void loop(struct context *ctx)
 		glDrawElements(GL_TRIANGLES, m->n_element, GL_UNSIGNED_INT, (void*)0);
 
 		SDL_GL_SwapWindow(ctx->win);
-		//angle += 0.002f;
+		angle += 0.002f;
 		SDL_Delay(20);
 	}
 
