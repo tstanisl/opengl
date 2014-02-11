@@ -475,7 +475,7 @@ static inline void cross(float d[3], float a[3], float b[3])
 void model_compute_normals(struct model *m)
 {
 	for (int i = 0; i < m->n_element; ++i)
-		memset(&normal[m->element[i]], 0, sizeof(normal[i]));
+		memset(&m->vertex[m->element[i]].normal, 0, sizeof(normal[i]));
 	for (int i = 0; i < m->n_element; i += 3) {
 		float *v0 = m->vertex[m->element[i + 0]].position;
 		float *v1 = m->vertex[m->element[i + 1]].position;
@@ -488,14 +488,11 @@ void model_compute_normals(struct model *m)
 		cross(n, q, p);
 		for (int j = 0; j < 3; ++j) {
 			int idx = m->element[i + j];
-			normal[idx][0] += n[0];
-			normal[idx][1] += n[1];
-			normal[idx][2] += n[2];
+			m->vertex[idx].normal[0] += n[0];
+			m->vertex[idx].normal[1] += n[1];
+			m->vertex[idx].normal[2] += n[2];
 		}
 	}
-	for (int i = 0; i < m->n_element; ++i) {
-		normalize(normal[m->element[i]]);
-		memcpy(m->vertex[m->element[i]].normal, normal[m->element[i]],
-			sizeof(normal[0]));
-	}
+	for (int i = 0; i < m->n_element; ++i)
+		normalize(m->vertex[m->element[i]].normal);
 }
