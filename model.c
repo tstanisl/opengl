@@ -475,7 +475,7 @@ static inline void cross(float d[3], float a[3], float b[3])
 void model_compute_normals(struct model *m)
 {
 	for (int i = 0; i < m->n_element; ++i)
-		memset(&m->vertex[m->element[i]].normal, 0, sizeof(normal[i]));
+		memset(&m->vertex[m->element[i]].normal, 0, sizeof(m->vertex[0].normal));
 	for (int i = 0; i < m->n_element; i += 3) {
 		float *v0 = m->vertex[m->element[i + 0]].position;
 		float *v1 = m->vertex[m->element[i + 1]].position;
@@ -495,4 +495,40 @@ void model_compute_normals(struct model *m)
 	}
 	for (int i = 0; i < m->n_element; ++i)
 		normalize(m->vertex[m->element[i]].normal);
+}
+
+void model_compute_tangents(struct model *m)
+{
+	for (int i = 0; i < m->n_element; ++i)
+		memset(&m->vertex[m->element[i]].tangent, 0, sizeof(m->vertex[0].normal));
+	for (int i = 0; i < m->n_element; i += 3) {
+		float *v0 = m->vertex[m->element[i + 0]].position;
+		float *v1 = m->vertex[m->element[i + 1]].position;
+		float *v2 = m->vertex[m->element[i + 2]].position;
+		float *t0 = m->vertex[m->element[i + 0]].texture;
+		float *t1 = m->vertex[m->element[i + 1]].texture;
+		float *t2 = m->vertex[m->element[i + 2]].texture;
+
+		float p1[3] = {v1[0] - v0[0], v1[1] - v0[1], v1[2] - v0[2]}; 
+		float p2[3] = {v2[0] - v0[0], v2[1] - v0[1], v2[2] - v0[2]}; 
+		float s1[2] = {t1[0] - t0[0], t1[1] - t0[1]}; 
+		float s2[2] = {t2[0] - t0[0], t2[1] - t0[1]}; 
+
+		float idet = 1.0f / (s1[0] * s2[1] - s1[1] * s2[0]);
+
+		float tangent[3] = {
+			(s2[1] * p1[0] - s1[1] * p2[0]) * idet,
+			(s2[1] * p1[1] - s1[1] * p2[1]) * idet,
+			(s2[1] * p1[2] - s1[1] * p2[2]) * idet,
+		};
+
+		for (int j = 0; j < 3; ++j) {
+			int idx = m->element[i + j];
+			m->vertex[idx].tangent[0] += tangent[0];
+			m->vertex[idx].tangent[1] += tangent[1];
+			m->vertex[idx].tangent[2] += tangent[2];
+		}
+	}
+	for (int i = 0; i < m->n_element; ++i)
+		normalize(m->vertex[m->element[i]].tangent);
 }

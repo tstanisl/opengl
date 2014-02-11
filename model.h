@@ -5,6 +5,7 @@ struct vertex {
 	float position[3];
 	float texture[2];
 	float normal[3];
+	float tangent[3];
 };
 
 struct model {
@@ -17,5 +18,6 @@ struct model {
 struct model *model_load(char *path);
 void model_put(struct model *m);
 void model_compute_normals(struct model *m);
+void model_compute_tangents(struct model *m);
 
 #endif /* MODEL_H */
