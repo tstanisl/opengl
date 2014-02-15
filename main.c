@@ -360,7 +360,7 @@ void loop(struct context *ctx)
 	if (ERR_ON(texId < 0, "failed to load texture\n"))
 		return;
 
-	int normId = texture_load("textures/normal2.png");
+	int normId = texture_load("textures/normal2s.png");
 	if (ERR_ON(texId < 0, "failed to load normals map\n"))
 		return;
 
@@ -464,11 +464,11 @@ void loop(struct context *ctx)
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	/*glEnable(GL_BLEND);
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);*/
-	/*glFrontFace(GL_CCW);
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+	glFrontFace(GL_CCW);
 	glCullFace(GL_BACK);
-	glEnable(GL_CULL_FACE);*/
+	glEnable(GL_CULL_FACE);
 
 	float angle = 0.0f;
 	struct camera cam = { .z = 4.0 };

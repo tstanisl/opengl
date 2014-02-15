@@ -14,7 +14,8 @@ void main()
 	vec3 btan = cross(fnorm, ftan);
 	mat3 NM = mat3(ftan, fnorm, -btan);
 
-	vec3 normal = normalize(fnorm + 1.3 * NM * texture(normal0, 16 * ftex).xyz);
+	vec3 tnormal = texture(normal0, 16 * ftex).xyz - 0.5;
+	vec3 normal = normalize(fnorm + 1.3 * NM * tnormal);
 	normal = normalize(normal);
 
 	float light;
@@ -37,5 +38,5 @@ void main()
 	vec3 color = 0.05 + light * texture(tex0, ftex).rgb;
 	//gl_FragColor.rgb = 0.5 + 0.5 * normalize(ftan) + 0.001 * color;
 	gl_FragColor.rgb = color;
-	gl_FragColor.a = 1.0;
+	gl_FragColor.a = diffuse;
 }
