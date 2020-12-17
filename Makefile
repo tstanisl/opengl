@@ -4,6 +4,10 @@ CC := gcc
 CFLAGS := -std=c99
 LDFLAGS :=
 
+PACKAGES := sdl2
+CFLAGS += $(shell pkg-config --cflags $(PACKAGES))
+LDFLAGS += $(shell pkg-config --libs $(PACKAGES))
+
 SRC_DIR := src
 BUILD_DIR := build
 
@@ -20,11 +24,13 @@ OBJS := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 all: $(TARGET)
 
 debug:
-	@echo $(SRCS)
-	@echo $(OBJS)
+	@echo CFLAGS=$(CFLAGS)
+	@echo LDFLAGS=$(LDFLAGS)
+	@echo SRCS=$(SRCS)
+	@echo OBJS=$(OBJS)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) $< -o $@
+	$(CC) $< -o $@ $(LDFLAGS)
 
 $(BUILD_DIR):
 	mkdir $(BUILD_DIR)
