@@ -1,10 +1,10 @@
 TARGET := prog
 CC := gcc
 
-CFLAGS := -std=c99
+CFLAGS := -std=c99 -Wall -pedantic
 LDFLAGS :=
-
 PACKAGES := sdl2
+
 CFLAGS += $(shell pkg-config --cflags $(PACKAGES))
 LDFLAGS += $(shell pkg-config --libs $(PACKAGES))
 
