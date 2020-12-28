@@ -3,7 +3,7 @@ CC := gcc
 
 CFLAGS := -std=c99 -Wall -pedantic
 LDFLAGS :=
-PACKAGES := sdl2
+PACKAGES := sdl2 opengl
 
 CFLAGS += $(shell pkg-config --cflags $(PACKAGES))
 LDFLAGS += $(shell pkg-config --libs $(PACKAGES))
