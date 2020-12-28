@@ -14,7 +14,7 @@ SDL_Window* init_win(void) {
 	SDL_Window *win = SDL_CreateWindow("SDL Tutorial",
 	                                   SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
 					   640, 480,
-					   SDL_WINDOW_SHOWN);
+					   SDL_WINDOW_SHOWN | SDL_WINDOW_OPENGL);
 	if (win == NULL) {
 		ERR("SDL_CreateWindow: %s\n", SDL_ERR);
 		SDL_Quit();
@@ -29,17 +29,27 @@ void deinit_win(SDL_Window* win) {
 	SDL_Quit();
 }
 
-int init_gl(SDL_Window *win) {
+SDL_GLContext init_gl(SDL_Window *win) {
+	SDL_GLContext ctx = SDL_GL_CreateContext(win);
+	if (ctx == NULL) {
+		ERR("SDL_GL_CreateContext: %s\n", SDL_ERR);
+		return NULL;
+	}
+
 	int width, height;
 	SDL_GetWindowSize(win, &width, &height);
 	glViewport(0, 0, width, height);
-	return 0;
+
+	return ctx;
 }
 
 void draw(void) {
+	puts("draw");
+	glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
 }
 
-void loop(void) {
+void loop(SDL_Window *win) {
 	int done = 0;
 	while (!done) {
 		SDL_Event event;
@@ -47,6 +57,8 @@ void loop(void) {
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE)
 				done = 1;
 		}
+		draw();
+		SDL_GL_SwapWindow(win);
 	}
 }
 
@@ -55,7 +67,7 @@ int main() {
 	if (win == NULL)
 		return -1;
 	init_gl(win);
-	loop();
+	loop(win);
 	deinit_win(win);
 	return 0;
 }
